@@ -1,0 +1,99 @@
+/* =========================================================
+   RW Dealer Portal — Admin Styles
+   ========================================================= */
+
+/* ---- Dashboard stat cards ---- */
+.rwdp-stat-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.rwdp-stat-card {
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  border-radius: 4px;
+  padding: 20px 24px;
+  min-width: 160px;
+  flex: 1 1 160px;
+  text-align: center;
+}
+
+.rwdp-stat-card__number {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1d2327;
+  line-height: 1.2;
+}
+
+.rwdp-stat-card__label {
+  display: block;
+  font-size: 0.875rem;
+  color: #50575e;
+  margin-top: 4px;
+}
+
+/* ---- Pending registrations table ---- */
+.rwdp-pending-table td,
+.rwdp-pending-table th {
+  vertical-align: middle;
+}
+
+.rwdp-pending-table .rwdp-dealer-select {
+  min-width: 180px;
+}
+
+.rwdp-action-btn {
+  cursor: pointer;
+  margin-right: 4px;
+}
+
+/* ---- Settings page ---- */
+.rwdp-settings-section td label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.rwdp-restricted-pages-list {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #c3c4c7;
+  padding: 8px 12px;
+  background: #fff;
+  border-radius: 3px;
+}
+
+.rwdp-restricted-pages-list label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* ---- Geocoding status box ---- */
+.rwdp-geocode-status {
+  font-size: 0.875rem;
+}
+
+.rwdp-geocode-status__valid {
+  color: #007017;
+}
+
+.rwdp-geocode-status__invalid {
+  color: #d63638;
+}
+
+/* ---- Filters row ---- */
+.rwdp-filters {
+  margin: 16px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.rwdp-filters select,
+.rwdp-filters input[type="date"] {
+  height: 30px;
+}

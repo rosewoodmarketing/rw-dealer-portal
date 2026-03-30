@@ -1,0 +1,507 @@
+/* =========================================================
+   RW Dealer Portal — Frontend Portal Styles
+   ========================================================= */
+
+/* ---- Base ---- */
+.rwdp-portal {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 0;
+  font-family: inherit;
+}
+
+/* ---- Notices ---- */
+.rwdp-notice {
+  padding: 12px 16px;
+  border-left: 4px solid #ccc;
+  background: #f6f6f6;
+  margin-bottom: 16px;
+  border-radius: 2px;
+}
+
+.rwdp-notice--success {
+  border-color: #007017;
+  background: #edfaef;
+  color: #007017;
+}
+
+.rwdp-notice--error {
+  border-color: #d63638;
+  background: #fdf6f6;
+  color: #d63638;
+}
+
+.rwdp-notice--warning {
+  border-color: #f0b849;
+  background: #fef8ee;
+  color: #956707;
+}
+
+/* ---- Buttons ---- */
+.rwdp-btn {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  line-height: 1.4;
+}
+
+.rwdp-btn--primary {
+  background: #1a5276;
+  color: #fff;
+  border-color: #1a5276;
+}
+
+.rwdp-btn--primary:hover,
+.rwdp-btn--primary:focus {
+  background: #154360;
+  border-color: #154360;
+  color: #fff;
+}
+
+.rwdp-btn--outline {
+  background: transparent;
+  color: #1a5276;
+  border-color: #1a5276;
+}
+
+.rwdp-btn--outline:hover,
+.rwdp-btn--outline:focus {
+  background: #1a5276;
+  color: #fff;
+}
+
+.rwdp-btn--ghost {
+  background: transparent;
+  color: #666;
+  border-color: #ccc;
+}
+
+.rwdp-btn--ghost:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.rwdp-btn--sm {
+  padding: 6px 12px;
+  font-size: 0.8125rem;
+}
+
+/* ---- Forms ---- */
+.rwdp-form fieldset {
+  border: 1px solid #ddd;
+  padding: 20px;
+  border-radius: 4px;
+  margin-bottom: 24px;
+}
+
+.rwdp-form legend {
+  font-weight: 700;
+  padding: 0 8px;
+  color: #1d2327;
+}
+
+.rwdp-form-row {
+  margin-bottom: 16px;
+}
+
+.rwdp-form-row label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 0.9375rem;
+}
+
+.rwdp-form-row input[type="text"],
+.rwdp-form-row input[type="email"],
+.rwdp-form-row input[type="tel"],
+.rwdp-form-row input[type="password"],
+.rwdp-form-row input[type="url"],
+.rwdp-form-row textarea,
+.rwdp-form-row select {
+  width: 100%;
+  max-width: 480px;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.rwdp-form-row textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* ---- Dashboard nav cards ---- */
+.rwdp-dashboard-header h2 {
+  margin-bottom: 24px;
+}
+
+.rwdp-dashboard-nav {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.rwdp-nav-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  text-decoration: none;
+  padding: 24px 16px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  color: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.rwdp-nav-card:hover,
+.rwdp-nav-card:focus {
+  border-color: #1a5276;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  text-decoration: none;
+  color: inherit;
+}
+
+.rwdp-nav-card--alert {
+  border-color: #e67e22;
+}
+
+.rwdp-nav-card .dashicons {
+  font-size: 2rem;
+  width: 2rem;
+  height: 2rem;
+  color: #1a5276;
+  margin-bottom: 12px;
+}
+
+.rwdp-nav-card--alert .dashicons {
+  color: #e67e22;
+}
+
+.rwdp-nav-card__title {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 6px;
+}
+
+.rwdp-nav-card__desc {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+/* ---- Assets grid ---- */
+.rwdp-assets__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.rwdp-assets__tab {
+  padding: 6px 14px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  text-decoration: none;
+  font-size: 0.875rem;
+  color: #333;
+  transition: background 0.15s, color 0.15s;
+}
+
+.rwdp-assets__tab--active,
+.rwdp-assets__tab:hover {
+  background: #1a5276;
+  color: #fff;
+  border-color: #1a5276;
+  text-decoration: none;
+}
+
+.rwdp-assets__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+.rwdp-asset-card {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.rwdp-asset-card__thumb img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+}
+
+.rwdp-asset-card__body {
+  padding: 16px;
+}
+
+.rwdp-asset-card__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.rwdp-asset-card__cats {
+  margin-bottom: 10px;
+}
+
+.rwdp-tag {
+  display: inline-block;
+  background: #eef2f7;
+  color: #1a5276;
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  margin-right: 4px;
+}
+
+.rwdp-asset-card__actions {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ---- Single-asset gallery grid (5 columns desktop) ---- */
+.rwdp-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+@media (max-width: 1024px) {
+  .rwdp-gallery-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 768px) {
+  .rwdp-gallery-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 480px) {
+  .rwdp-gallery-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.rwdp-gallery-item {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fafafa;
+}
+
+.rwdp-gallery-item__trigger {
+  display: block;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  cursor: zoom-in;
+  text-decoration: none;
+  color: inherit;
+}
+
+.rwdp-gallery-item__trigger:focus-visible {
+  outline: 2px solid #1a5276;
+  outline-offset: 2px;
+}
+
+.rwdp-gallery-item__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+.rwdp-gallery-item__trigger:hover .rwdp-gallery-item__img {
+  transform: scale(1.04);
+}
+
+.rwdp-gallery-item__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 6px 8px;
+  background: #fff;
+  border-top: 1px solid #e8e8e8;
+  min-height: 32px;
+}
+
+.rwdp-gallery-item__caption {
+  font-size: 0.75rem;
+  color: #555;
+  line-height: 1.3;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rwdp-gallery-item__download {
+  flex-shrink: 0;
+  color: #1a5276;
+  line-height: 1;
+  text-decoration: none;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.rwdp-gallery-item__download:hover {
+  opacity: 1;
+}
+
+.rwdp-gallery-item__download .dashicons {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* ---- Admin meta-box gallery thumbnail (legacy small style) ---- */
+.rwdp-gallery__thumb {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 3px;
+  border: 1px solid #ddd;
+}
+
+.rwdp-video-embed {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.rwdp-video-embed iframe,
+.rwdp-video-embed object,
+.rwdp-video-embed embed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- Requests table ---- */
+.rwdp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.rwdp-table th,
+.rwdp-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  vertical-align: top;
+}
+
+.rwdp-table th {
+  background: #f6f6f6;
+  font-weight: 700;
+}
+
+.rwdp-requests-table__message {
+  max-width: 300px;
+}
+
+/* ---- Pagination ---- */
+.rwdp-pagination {
+  margin-top: 20px;
+  display: flex;
+  gap: 6px;
+}
+
+.rwdp-page-btn {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-decoration: none;
+  color: #1a5276;
+  font-size: 0.875rem;
+}
+
+.rwdp-page-btn.active {
+  background: #1a5276;
+  color: #fff;
+  border-color: #1a5276;
+}
+
+/* ---- Account / Dealer edit ---- */
+.rwdp-dealer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rwdp-dealer-list li {
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.rwdp-account-logout {
+  margin-top: 32px;
+}
+
+.rwdp-dealer-edit-panel {
+  margin-bottom: 40px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #eee;
+}
+
+/* ---- Login form ---- */
+.rwdp-login-wrap {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.rwdp-tabs {
+  margin-bottom: 24px;
+}
+
+.rwdp-tabs__nav {
+  display: flex;
+  border-bottom: 2px solid #ddd;
+  margin-bottom: 20px;
+}
+
+.rwdp-tabs__btn {
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.rwdp-tabs__btn[aria-selected="true"] {
+  color: #1a5276;
+  border-bottom-color: #1a5276;
+}
+
+.rwdp-tab-panel {
+  display: none;
+}
+
+.rwdp-form-message {
+  margin-bottom: 12px;
+}
