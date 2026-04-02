@@ -6,7 +6,7 @@
 .rwdp-dealer-finder {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 20px 0;
+  padding: 0;
 }
 
 /* ---- Controls row ---- */
@@ -15,7 +15,7 @@
   flex-wrap: wrap;
   gap: 12px;
   align-items: flex-end;
-  margin-bottom: 20px;
+  margin-bottom: 0;
 }
 
 .rwdp-finder__search {
@@ -41,11 +41,7 @@
 
 .rwdp-finder__radius label,
 .rwdp-finder__type-filter label {
-  display: block;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: #555;
+  display: none;
 }
 
 .rwdp-finder__radius select,
@@ -79,11 +75,7 @@
 
 .rwdp-finder__results {
   flex: 1 1 240px;
-  max-height: 520px;
   overflow-y: auto;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  background: #fff;
   padding: 0;
 }
 
@@ -154,6 +146,34 @@
   margin: 0;
 }
 
+/* ---- Info window — override Google Maps popup height + padding ---- */
+#rwdp-map .gm-style-iw,
+#rwdp-map .gm-style-iw-c {
+  max-height: none !important;
+  padding: 0 !important;
+}
+
+#rwdp-map .gm-style .gm-style-iw-c {
+  padding: 0 !important;
+}
+
+/* Keep the close button row above the pulled-up content */
+#rwdp-map .gm-style-iw-chr {
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+/* Pull content up so it starts at the top of the bubble */
+#rwdp-map .gm-style-iw-d {
+  overflow: auto !important;
+  max-height: none !important;
+  padding: 0 !important;
+  position: relative !important;
+  top: -48px !important;
+  margin-bottom: -48px !important;
+  z-index: 1 !important;
+}
+
 /* ---- Info window ---- */
 .rwdp-infowindow {
   max-width: 260px;
@@ -161,7 +181,14 @@
   font-size: 0.9rem;
 }
 
-.rwdp-infowindow__logo,
+.rwdp-infowindow__logo {
+  width: 100%;
+  max-height: 100px;
+  object-fit: contain;
+  margin-bottom: 8px;
+  border-radius: 3px;
+}
+
 .rwdp-infowindow__img {
   width: 100%;
   max-height: 100px;
@@ -197,8 +224,8 @@
 .rwdp-infowindow__actions {
   margin-top: 10px;
   display: flex;
+  flex-direction: column;
   gap: 6px;
-  flex-wrap: wrap;
 }
 
 /* ---- Contact modal ---- */
@@ -257,6 +284,227 @@
   padding-right: 32px;
 }
 
+/* ---- Elementor editor placeholders ---- */
+.rwdp-editor-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #e8edf2;
+  border: 2px dashed #b0bec5;
+  border-radius: 6px;
+  color: #607d8b;
+  user-select: none;
+}
+
+.rwdp-editor-placeholder--map {
+  min-height: 300px;
+}
+
+.rwdp-editor-placeholder p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.rwdp-editor-placeholder small {
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
+/* Placeholder image/logo boxes inside mock cards */
+.rwdp-placeholder-img {
+  width: 100%;
+  height: 180px;
+  background: linear-gradient(135deg, #cfd8dc 25%, #b0bec5 100%);
+  flex-shrink: 0;
+}
+
+.rwdp-placeholder-logo {
+  width: 120px;
+  height: 40px;
+  background: #cfd8dc;
+  border-radius: 3px;
+}
+
+/* ---- Dealer Results Grid (Elementor widget output) ---- */
+.rwdp-results-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* default; overridden by Elementor control */
+  gap: 24px;
+}
+
+.rwdp-result-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  outline: none;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  position: relative;
+}
+
+.rwdp-result-card:focus-visible {
+  box-shadow: 0 0 0 2px #1a5276;
+}
+
+/* View on Map — absolutely positioned top-right of card */
+.rwdp-result-card__view-on-map {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  cursor: pointer;
+  border: none;
+  background: rgba(255, 255, 255, 0.90);
+  color: #1a5276;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: inherit;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.rwdp-result-card__view-on-map:hover {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.rwdp-result-card__thumbnail {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+  flex-shrink: 0;
+}
+
+.rwdp-result-card__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 16px;
+}
+
+.rwdp-result-card__logo-wrap {
+  margin-bottom: 10px;
+}
+
+.rwdp-result-card__logo {
+  display: block;
+  max-height: 60px;
+  width: auto;
+  object-fit: contain;
+}
+
+.rwdp-result-card__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.rwdp-result-card__address,
+.rwdp-result-card__phone,
+.rwdp-result-card__hours {
+  font-size: 0.875rem;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+/* Address row: address text left, Get Directions button right */
+.rwdp-result-card__address-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.rwdp-result-card__address-row .rwdp-result-card__address {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.rwdp-result-card__phone a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.rwdp-result-card__phone a:hover {
+  text-decoration: underline;
+}
+
+.rwdp-result-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.rwdp-result-card__directions,
+.rwdp-result-card__contact,
+.rwdp-result-card__more-info {
+  display: inline-block;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  text-decoration: none;
+  border-radius: 4px;
+  text-align: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.rwdp-result-card__directions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0f0f0;
+  color: #333;
+  align-self: flex-end;
+}
+
+.rwdp-result-card__directions i,
+.rwdp-result-card__directions .e-font-icon-svg,
+.rwdp-result-card__directions svg {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+}
+
+.rwdp-result-card__directions svg {
+  fill: currentColor;
+}
+
+.rwdp-result-card__directions:hover {
+  background: #e0e0e0;
+}
+
+.rwdp-result-card__more-info {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.rwdp-result-card__more-info:hover {
+  background: #e0e0e0;
+}
+
+.rwdp-result-card__contact {
+  background: #1a5276;
+  color: #fff;
+  font-family: inherit;
+}
+
+.rwdp-result-card__contact:hover {
+  background: #154360;
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 680px) {
   .rwdp-finder__layout {
@@ -271,5 +519,9 @@
 
   .rwdp-finder__map {
     height: 320px;
+  }
+
+  .rwdp-results-grid {
+    grid-template-columns: 1fr;
   }
 }

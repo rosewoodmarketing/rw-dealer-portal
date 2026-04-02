@@ -52,6 +52,9 @@ require_once RWDP_PLUGIN_DIR . 'includes/dealer-finder.php';
 // Fluent Forms integration
 require_once RWDP_PLUGIN_DIR . 'includes/fluent-forms.php';
 
+// Elementor Widgets
+require_once RWDP_PLUGIN_DIR . 'elementor/elementor-manager.php';
+
 // GitHub Updater
 require_once RWDP_PLUGIN_DIR . 'includes/github-updater.php';
 if ( is_admin() && class_exists( '\RW_Dealer_Portal\Updater' ) ) {

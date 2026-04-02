@@ -28,43 +28,57 @@ var rwdpInitMap; // exposed globally for Google Maps callback
   // -----------------------------------------------------------------------
   // Build info window HTML for a dealer
   // -----------------------------------------------------------------------
+  function getPopupToggles() {
+    var $map = $('#rwdp-map');
+    return {
+      logo    : $map.data('show-logo')    !== 0 && $map.data('show-logo')    !== '0',
+      phone   : $map.data('show-phone')   !== 0 && $map.data('show-phone')   !== '0',
+      website : $map.data('show-website') !== 0 && $map.data('show-website') !== '0',
+      hours   : $map.data('show-hours')   !== 0 && $map.data('show-hours')   !== '0',
+      contact : $map.data('show-contact') !== 0 && $map.data('show-contact') !== '0',
+    };
+  }
+
   function buildInfoWindowContent(dealer) {
+    var show = getPopupToggles();
     var html = '<div class="rwdp-infowindow">';
 
-    if (dealer.logo_url) {
-      html += '<img src="' + dealer.logo_url + '" alt="' + escHtml(dealer.title) + ' logo" class="rwdp-infowindow__logo" />';
-    } else if (dealer.feat_img) {
-      html += '<img src="' + dealer.feat_img + '" alt="' + escHtml(dealer.title) + '" class="rwdp-infowindow__img" />';
-    }
+    if ( show.logo && dealer.logo_url ) {
+        html += '<img src="' + dealer.logo_url + '" alt="' + escHtml(dealer.title) + ' logo" class="rwdp-infowindow__logo" />';
+      }
 
-    html += '<strong class="rwdp-infowindow__name">' + escHtml(dealer.title) + '</strong>';
+    html += '<h3 class="rwdp-infowindow__name">' + escHtml(dealer.title) + '</h3>';
 
     if (dealer.address) {
       html += '<p class="rwdp-infowindow__address">' + escHtml(dealer.address) + ', ' + escHtml(dealer.city) + ', ' + escHtml(dealer.state) + ' ' + escHtml(dealer.zip) + '</p>';
     }
-    if (dealer.phone) {
+    if ( show.phone && dealer.phone) {
       html += '<p><a href="tel:' + escHtml(dealer.phone) + '">' + escHtml(dealer.phone) + '</a></p>';
     }
-    if (dealer.website) {
+    if ( show.website && dealer.website) {
       html += '<p><a href="' + escHtml(dealer.website) + '" target="_blank" rel="noopener noreferrer">' + escHtml(dealer.website) + '</a></p>';
     }
-    if (dealer.hours) {
+    if ( show.hours && dealer.hours) {
       html += '<p class="rwdp-infowindow__hours">' + escHtml(dealer.hours).replace(/\n/g, '<br>') + '</p>';
     }
-
-    html += '<div class="rwdp-infowindow__actions">';
     if (dealer.address) {
       var mapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dealer.address + ', ' + dealer.city + ', ' + dealer.state + ' ' + dealer.zip);
-      html += '<a href="' + mapsUrl + '" class="rwdp-btn rwdp-btn--outline rwdp-btn--sm" target="_blank" rel="noopener noreferrer">' + rwdpMap.directionsText + '</a>';
-    }
-    html += '<button type="button" class="rwdp-btn rwdp-btn--primary rwdp-btn--sm rwdp-contact-trigger" data-dealer-id="' + dealer.id + '" data-dealer-name="' + escHtml(dealer.title) + '">' + rwdpMap.contactText + '</button>';
-    html += '</div></div>';
+      html += '<a href="' + mapsUrl + '" class="rwdp-btn rwdp-btn--outline rwdp-btn--sm" target="_blank" rel="noopener noreferrer">' + rwdpMap.directionsText + '</a><br>';
+     }
+    if ( show.contact ) {
+        html += '<button type="button" class="rwdp-btn rwdp-btn--primary rwdp-btn--sm rwdp-contact-trigger" data-dealer-id="' + dealer.id + '" data-dealer-name="' + escHtml(dealer.title) + '">' + rwdpMap.contactText + '</button>';
+      }
 
+    html += '</div>';
     return html;
   }
 
   function escHtml(str) {
     return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function escAttr(str) {
+    return String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#039;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   // -----------------------------------------------------------------------
@@ -126,8 +140,24 @@ var rwdpInitMap; // exposed globally for Google Maps callback
   }
 
   // -----------------------------------------------------------------------
-  // Results sidebar list
+  // Results grid/list
   // -----------------------------------------------------------------------
+  function getListToggles() {
+    var $el = $('#rwdp-results-list');
+    return {
+      thumbnail  : $el.data('show-thumbnail')   !== 0 && $el.data('show-thumbnail')   !== '0',
+      logo       : $el.data('show-logo')        !== 0 && $el.data('show-logo')        !== '0',
+      title      : $el.data('show-title')       !== 0 && $el.data('show-title')       !== '0',
+      address    : $el.data('show-address')     !== 0 && $el.data('show-address')     !== '0',
+      phone      : $el.data('show-phone')       !== 0 && $el.data('show-phone')       !== '0',
+      hours      : $el.data('show-hours')       !== 0 && $el.data('show-hours')       !== '0',
+      directions : $el.data('show-directions')  !== 0 && $el.data('show-directions')  !== '0',
+      contact    : $el.data('show-contact')     !== 0 && $el.data('show-contact')     !== '0',
+      more_info  : $el.data('show-more-info')   !== 0 && $el.data('show-more-info')   !== '0',
+      view_on_map: $el.data('show-view-on-map') !== 0 && $el.data('show-view-on-map') !== '0',
+    };
+  }
+
   function showResultsList(dealers) {
     var $list = $('#rwdp-results-list');
     $list.empty();
@@ -137,37 +167,102 @@ var rwdpInitMap; // exposed globally for Google Maps callback
       return;
     }
 
-    dealers.forEach(function (dealer, idx) {
-      var $item = $('<div class="rwdp-result-item" role="button" tabindex="0">');
-      $item.attr('data-dealer-id', dealer.id);
-      $item.attr('aria-label', dealer.title);
+    var t = getListToggles();
+    var dirIconHtml = $('#rwdp-results-list').attr('data-directions-icon') || '';
+    var $grid = $('<div class="rwdp-results-grid">');
 
-      var inner = '';
-      if (dealer.logo_url) {
-        inner += '<img src="' + dealer.logo_url + '" alt="" class="rwdp-result-item__logo" aria-hidden="true" />';
-      }
-      inner += '<div class="rwdp-result-item__info">';
-      inner += '<strong>' + escHtml(dealer.title) + '</strong>';
-      if (dealer.city || dealer.state) {
-        inner += '<span>' + escHtml([dealer.city, dealer.state].filter(Boolean).join(', ')) + '</span>';
-      }
-      if (dealer.dist !== undefined) {
-        inner += '<span class="rwdp-result-item__dist">' + dealer.dist.toFixed(1) + ' mi</span>';
-      }
-      inner += '</div>';
-      $item.html(inner);
+    dealers.forEach(function (dealer) {
+      var card = '<div class="rwdp-result-card" data-dealer-id="' + dealer.id + '">';
 
-      $item.on('click keypress', function (e) {
-        if (e.type === 'keypress' && e.which !== 13) return;
-        var matchMarker = allMarkers.find(function (m) { return m.dealerData && m.dealerData.id === dealer.id; });
-        if (matchMarker) {
-          map.panTo(matchMarker.getPosition());
-          openInfoWindow(matchMarker, dealer);
+      // View on Map button (absolute, top-right of card)
+      if (t.view_on_map) {
+        card += '<button type="button" class="rwdp-result-card__view-on-map rwdp-vom-btn"'
+             +  ' data-dealer-id="' + dealer.id + '"'
+             +  ' aria-label="' + escAttr(rwdpMap.viewOnMapText || 'View on Map') + '">'  
+             +  escHtml(rwdpMap.viewOnMapText || 'View on Map')
+             + '</button>';
+      }
+
+      // Thumbnail
+      if (t.thumbnail && dealer.feat_img) {
+        card += '<img src="' + escAttr(dealer.feat_img) + '" alt="" class="rwdp-result-card__thumbnail" aria-hidden="true" />';
+      }
+
+      card += '<div class="rwdp-result-card__body">';
+
+      // Logo
+      if (t.logo && dealer.logo_url) {
+        card += '<div class="rwdp-result-card__logo-wrap">';
+        card += '<img src="' + escAttr(dealer.logo_url) + '" alt="" class="rwdp-result-card__logo" aria-hidden="true" />';
+        card += '</div>';
+      }
+
+      // Title
+      if (t.title) {
+        card += '<div class="rwdp-result-card__title">' + escHtml(dealer.title) + '</div>';
+      }
+
+      // Address row: address text + inline Get Directions button
+      if (t.address) {
+        var addrParts = [];
+        if (dealer.address) addrParts.push(dealer.address);
+        var cityLine = [dealer.city, dealer.state].filter(Boolean).join(', ');
+        if (dealer.zip) cityLine += (cityLine ? ' ' : '') + dealer.zip;
+        if (cityLine)   addrParts.push(cityLine);
+        if (addrParts.length) {
+          card += '<div class="rwdp-result-card__address-row">';
+          card += '<div class="rwdp-result-card__address">' + addrParts.map(escHtml).join('<br>') + '</div>';
+          if (t.directions) {
+            var dirQuery = [dealer.address, dealer.city, dealer.state, dealer.zip].filter(Boolean).join(', ');
+            card += '<a href="https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dirQuery) + '"'
+                 +   ' target="_blank" rel="noopener noreferrer"'
+                 +   ' class="rwdp-result-card__directions">'
+                 +   escHtml(rwdpMap.directionsText || 'Get Directions')
+                 +   dirIconHtml
+                 + '</a>';
+          }
+          card += '</div>';
         }
-      });
+      }
 
-      $list.append($item);
+      // Phone
+      if (t.phone && dealer.phone) {
+        var tel = dealer.phone.replace(/[^\d+]/g, '');
+        card += '<div class="rwdp-result-card__phone"><a href="tel:' + escAttr(tel) + '">' + escHtml(dealer.phone) + '</a></div>';
+      }
+
+      // Hours
+      if (t.hours && dealer.hours) {
+        card += '<div class="rwdp-result-card__hours">' + escHtml(dealer.hours) + '</div>';
+      }
+
+      // Actions: Contact This Dealer | More Info
+      var hasContact  = t.contact;
+      var hasMoreInfo = t.more_info && dealer.permalink;
+
+      if (hasContact || hasMoreInfo) {
+        card += '<div class="rwdp-result-card__actions">';
+        if (hasContact) {
+          card += '<button type="button" class="rwdp-result-card__contact rwdp-contact-btn"'
+               +  ' data-dealer-id="' + dealer.id + '"'
+               +  ' data-dealer-name="' + escAttr(dealer.title) + '">'
+               +  escHtml(rwdpMap.contactText || 'Contact This Dealer')
+               + '</button>';
+        }
+        if (hasMoreInfo) {
+          card += '<a href="' + escAttr(dealer.permalink) + '"'
+               +  ' class="rwdp-result-card__more-info">'
+               +  escHtml(rwdpMap.moreInfoText || 'More Info')
+               + '</a>';
+        }
+        card += '</div>';
+      }
+
+      card += '</div></div>'; // .body / .card
+      $grid.append($(card));
     });
+
+    $list.append($grid);
   }
 
   // -----------------------------------------------------------------------
@@ -229,12 +324,21 @@ var rwdpInitMap; // exposed globally for Google Maps callback
   // -----------------------------------------------------------------------
   // Contact modal
   // -----------------------------------------------------------------------
-  $(document).on('click', '.rwdp-contact-trigger', function () {
+  $(document).on('click', '.rwdp-contact-trigger, .rwdp-contact-btn', function () {
     var dealerId   = $(this).data('dealer-id');
     var dealerName = $(this).data('dealer-name');
     openContactModal(dealerId, dealerName);
   });
 
+  $(document).on('click', '.rwdp-vom-btn', function () {
+    var dealerId    = $(this).data('dealer-id');
+    var dealer      = allDealers.find(function (d) { return d.id === dealerId; });
+    var matchMarker = allMarkers.find(function (m) { return m.dealerData && m.dealerData.id === dealerId; });
+    if (matchMarker) {
+      map.panTo(matchMarker.getPosition());
+      if (dealer) openInfoWindow(matchMarker, dealer);
+    }
+  });
   $(document).on('click', '#rwdp-modal-close, #rwdp-modal-overlay', function () {
     closeContactModal();
   });

@@ -3,10 +3,44 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 add_shortcode( 'rwdp_dealer_finder', 'rwdp_dealer_finder_shortcode' );
 
+// Register assets early so Elementor widgets can declare them as dependencies.
+add_action( 'wp_enqueue_scripts', 'rwdp_register_dealer_finder_assets', 5 );
+
+function rwdp_register_dealer_finder_assets() {
+	$settings = get_option( 'rwdp_settings', [] );
+	$maps_key = $settings['google_maps_api_key'] ?? '';
+
+	wp_register_style( 'rwdp-dealer-map', RWDP_PLUGIN_URL . 'assets/css/dealer-map.css', [], RWDP_VERSION );
+
+	wp_register_script( 'rwdp-dealer-map', RWDP_PLUGIN_URL . 'assets/js/dealer-map.js', [ 'jquery' ], RWDP_VERSION, true );
+	wp_localize_script( 'rwdp-dealer-map', 'rwdpMap', [
+		'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
+		'nonce'          => wp_create_nonce( 'rwdp_dealer_finder' ),
+		'hasMapsKey'     => ! empty( $maps_key ),
+		'noResults'      => __( 'No dealers found near that location.', 'rw-dealer-portal' ),
+		'contactText'    => __( 'Contact This Dealer', 'rw-dealer-portal' ),
+		'directionsText' => __( 'Get Directions', 'rw-dealer-portal' ),
+		'viewOnMapText'  => __( 'View on Map', 'rw-dealer-portal' ),
+		'moreInfoText'   => __( 'More Info', 'rw-dealer-portal' ),
+	] );
+
+	wp_register_script( 'rwdp-ff-helper', RWDP_PLUGIN_URL . 'assets/js/fluent-forms-helper.js', [ 'jquery', 'rwdp-dealer-map' ], RWDP_VERSION, true );
+
+	if ( $maps_key ) {
+		wp_register_script(
+			'google-maps',
+			'https://maps.googleapis.com/maps/api/js?key=' . rawurlencode( $maps_key ) . '&libraries=places&callback=rwdpInitMap',
+			[ 'rwdp-dealer-map' ],
+			null,
+			true
+		);
+	}
+}
+
+// Enqueue for pages using the shortcode (Elementor widgets use get_script/style_depends instead).
 add_action( 'wp_enqueue_scripts', 'rwdp_enqueue_dealer_finder_assets' );
 
 function rwdp_enqueue_dealer_finder_assets() {
-	// Only enqueue on pages that use the shortcode
 	global $post;
 	if ( ! $post || ! has_shortcode( $post->post_content, 'rwdp_dealer_finder' ) ) {
 		return;
@@ -15,29 +49,13 @@ function rwdp_enqueue_dealer_finder_assets() {
 	$settings = get_option( 'rwdp_settings', [] );
 	$maps_key = $settings['google_maps_api_key'] ?? '';
 
+	wp_enqueue_style( 'rwdp-dealer-map' );
+	wp_enqueue_script( 'rwdp-dealer-map' );
+	wp_enqueue_script( 'rwdp-ff-helper' );
+
 	if ( $maps_key ) {
-		wp_enqueue_script(
-			'google-maps',
-			'https://maps.googleapis.com/maps/api/js?key=' . rawurlencode( $maps_key ) . '&libraries=places&callback=rwdpInitMap',
-			[ 'rwdp-dealer-map' ],
-			null,
-			true
-		);
+		wp_enqueue_script( 'google-maps' );
 	}
-
-	wp_enqueue_style( 'rwdp-dealer-map', RWDP_PLUGIN_URL . 'assets/css/dealer-map.css', [], RWDP_VERSION );
-
-	wp_enqueue_script( 'rwdp-dealer-map', RWDP_PLUGIN_URL . 'assets/js/dealer-map.js', [ 'jquery' ], RWDP_VERSION, true );
-	wp_localize_script( 'rwdp-dealer-map', 'rwdpMap', [
-		'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
-		'nonce'        => wp_create_nonce( 'rwdp_dealer_finder' ),
-		'hasMapsKey'   => ! empty( $maps_key ),
-		'noResults'    => __( 'No dealers found near that location.', 'rw-dealer-portal' ),
-		'contactText'  => __( 'Contact This Dealer', 'rw-dealer-portal' ),
-		'directionsText' => __( 'Get Directions', 'rw-dealer-portal' ),
-	] );
-
-	wp_enqueue_script( 'rwdp-ff-helper', RWDP_PLUGIN_URL . 'assets/js/fluent-forms-helper.js', [ 'jquery', 'rwdp-dealer-map' ], RWDP_VERSION, true );
 }
 
 function rwdp_dealer_finder_shortcode( $atts ) {
