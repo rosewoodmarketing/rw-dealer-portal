@@ -63,6 +63,9 @@ Use the **Lock to Dealer Type** control on the Dealer Search Bar widget and ente
 
 == Changelog ==
 
+= 1.0.3 =
+* Fixed: administrators missing custom CPT capabilities on sites where the plugin activation hook never fired (cloned DBs, file-only deploys). Capabilities now self-heal on every load via `plugins_loaded`.
+
 = 1.0.2 =
 * Added responsive Max Width control to the Dealer Search Bar search input.
 

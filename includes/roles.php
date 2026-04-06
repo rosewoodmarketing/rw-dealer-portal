@@ -166,6 +166,62 @@ function rwdp_sync_portal_manager_caps() {
 add_action( 'plugins_loaded', 'rwdp_sync_portal_manager_caps' );
 
 /**
+ * Ensure the administrator role always has the full set of CPT capabilities.
+ * Mirrors rwdp_sync_portal_manager_caps() so that sites where the activation
+ * hook never fired (cloned DBs, file-only deploys, etc.) self-heal on the
+ * next page load without requiring deactivate/reactivate.
+ */
+function rwdp_sync_admin_caps() {
+	$admin = get_role( 'administrator' );
+	if ( ! $admin ) {
+		return;
+	}
+
+	$caps = [
+		'view_portal',
+		'manage_rwdp_portal',
+		'view_rwdp_submissions',
+
+		// Dealer CPT
+		'edit_rw_dealer',
+		'read_rw_dealer',
+		'delete_rw_dealer',
+		'edit_rw_dealers',
+		'edit_others_rw_dealers',
+		'edit_published_rw_dealers',
+		'edit_private_rw_dealers',
+		'publish_rw_dealers',
+		'read_private_rw_dealers',
+		'delete_rw_dealers',
+		'delete_others_rw_dealers',
+		'delete_published_rw_dealers',
+		'delete_private_rw_dealers',
+
+		// Asset CPT
+		'edit_rw_asset',
+		'read_rw_asset',
+		'delete_rw_asset',
+		'edit_rw_assets',
+		'edit_others_rw_assets',
+		'edit_published_rw_assets',
+		'edit_private_rw_assets',
+		'publish_rw_assets',
+		'read_private_rw_assets',
+		'delete_rw_assets',
+		'delete_others_rw_assets',
+		'delete_published_rw_assets',
+		'delete_private_rw_assets',
+	];
+
+	foreach ( $caps as $cap ) {
+		if ( ! $admin->has_cap( $cap ) ) {
+			$admin->add_cap( $cap );
+		}
+	}
+}
+add_action( 'plugins_loaded', 'rwdp_sync_admin_caps' );
+
+/**
  * Remove custom roles on plugin uninstall (called from uninstall.php).
  */
 function rwdp_remove_roles() {
