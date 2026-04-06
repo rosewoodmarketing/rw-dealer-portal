@@ -411,6 +411,18 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 			'description' => __( 'Displayed to the right of the button text.', 'rw-dealer-portal' ),
 		] );
 
+		$this->add_control( 'directions_icon_size', [
+			'label'      => __( 'Icon Size', 'rw-dealer-portal' ),
+			'type'       => \Elementor\Controls_Manager::SLIDER,
+			'size_units' => [ 'px', 'em', 'rem' ],
+			'range'      => [ 'px' => [ 'min' => 8, 'max' => 60 ] ],
+			'condition'  => [ 'directions_icon[value]!' => '' ],
+			'selectors'  => [
+				'{{WRAPPER}} .rwdp-result-card__directions i'   => 'font-size: {{SIZE}}{{UNIT}};',
+				'{{WRAPPER}} .rwdp-result-card__directions svg' => 'width: {{SIZE}}{{UNIT}}; height: {{SIZE}}{{UNIT}};',
+			],
+		] );
+
 		$this->add_control( 'directions_icon_spacing', [
 			'label'      => __( 'Icon Spacing', 'rw-dealer-portal' ),
 			'type'       => \Elementor\Controls_Manager::SLIDER,
@@ -727,7 +739,7 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 		$dir_icon_html = '';
 		if ( ! empty( $s['directions_icon']['value'] ) ) {
 			ob_start();
-			\Elementor\Icons_Manager::render_icon( $s['directions_icon'], [ 'aria-hidden' => 'true' ] );
+			\Elementor\Icons_Manager::render_icon( $s['directions_icon'], [ 'aria-hidden' => 'true', 'class' => 'rwdp-dir-icon' ] );
 			$dir_icon_html = ob_get_clean();
 		}
 

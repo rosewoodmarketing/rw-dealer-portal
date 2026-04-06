@@ -4,7 +4,7 @@ Tags: dealer, dealer finder, dealer portal, dealer locator, elementor
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -62,6 +62,11 @@ Use the **Lock to Dealer Type** control on the Dealer Search Bar widget and ente
 4. Plugin settings screen (Google Maps API key, page assignments).
 
 == Changelog ==
+
+= 1.0.4 =
+* Added: Icon and icon position controls to the Get Directions button on the Dealer Map widget popup.
+* Added: Icon Size control to the Get Directions button on both the Dealer Map and Dealer Results List widgets.
+* Fixed: Icon size selectors now correctly target rendered `<i>` and `<svg>` elements.
 
 = 1.0.3 =
 * Fixed: administrators missing custom CPT capabilities on sites where the plugin activation hook never fired (cloned DBs, file-only deploys). Capabilities now self-heal on every load via `plugins_loaded`.

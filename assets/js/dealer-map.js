@@ -49,9 +49,9 @@ var rwdpInitMap; // exposed globally for Google Maps callback
 
     html += '<h3 class="rwdp-infowindow__name">' + escHtml(dealer.title) + '</h3>';
 
-    if (dealer.address) {
-      html += '<p class="rwdp-infowindow__address">' + escHtml(dealer.address) + ', ' + escHtml(dealer.city) + ', ' + escHtml(dealer.state) + ' ' + escHtml(dealer.zip) + '</p>';
-    }
+    html += '<div class="rwdp-infowindow__details">';
+
+    
     if ( show.phone && dealer.phone) {
       html += '<p><a href="tel:' + escHtml(dealer.phone) + '">' + escHtml(dealer.phone) + '</a></p>';
     }
@@ -61,10 +61,20 @@ var rwdpInitMap; // exposed globally for Google Maps callback
     if ( show.hours && dealer.hours) {
       html += '<p class="rwdp-infowindow__hours">' + escHtml(dealer.hours).replace(/\n/g, '<br>') + '</p>';
     }
+
     if (dealer.address) {
-      var mapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dealer.address + ', ' + dealer.city + ', ' + dealer.state + ' ' + dealer.zip);
-      html += '<a href="' + mapsUrl + '" class="rwdp-btn rwdp-btn--outline rwdp-btn--sm" target="_blank" rel="noopener noreferrer">' + rwdpMap.directionsText + '</a><br>';
-     }
+      html += '<p class="rwdp-infowindow__address">' + escHtml(dealer.address) + ', ' + escHtml(dealer.city) + ', ' + escHtml(dealer.state) + ' ' + escHtml(dealer.zip) + '</p>';
+      var mapsUrl     = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dealer.address + ', ' + dealer.city + ', ' + dealer.state + ' ' + dealer.zip);
+      var dirIconHtml = $('#rwdp-map').attr('data-directions-icon') || '';
+      var dirIconPos  = $('#rwdp-map').attr('data-directions-icon-position') || 'before';
+      var dirInner    = dirIconPos === 'before'
+          ? dirIconHtml + rwdpMap.directionsText
+          : rwdpMap.directionsText + dirIconHtml;
+      html += '<a href="' + mapsUrl + '" class="rwdp-btn rwdp-btn--outline rwdp-btn--sm rwdp-popup-dir-btn" target="_blank" rel="noopener noreferrer">' + dirInner + '</a>';
+    }
+
+    html += '</div>';
+
     if ( show.contact ) {
         html += '<button type="button" class="rwdp-btn rwdp-btn--primary rwdp-btn--sm rwdp-contact-trigger" data-dealer-id="' + dealer.id + '" data-dealer-name="' + escHtml(dealer.title) + '">' + rwdpMap.contactText + '</button>';
       }

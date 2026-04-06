@@ -62,6 +62,29 @@ class RWDP_Dealer_Map_Widget extends \Elementor\Widget_Base {
 
 		$this->end_controls_section();
 
+		// ── Content: Popup — Directions Button ───────────────────────────
+		$this->start_controls_section( 'section_popup_dir_btn', [
+			'label' => __( 'Popup — Directions Button', 'rw-dealer-portal' ),
+		] );
+
+		$this->add_control( 'popup_dir_icon', [
+			'label' => __( 'Icon', 'rw-dealer-portal' ),
+			'type'  => \Elementor\Controls_Manager::ICONS,
+		] );
+
+		$this->add_control( 'popup_dir_icon_position', [
+			'label'     => __( 'Icon Position', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::SELECT,
+			'default'   => 'before',
+			'options'   => [
+				'before' => __( 'Before Text', 'rw-dealer-portal' ),
+				'after'  => __( 'After Text', 'rw-dealer-portal' ),
+			],
+			'condition' => [ 'popup_dir_icon[value]!' => '' ],
+		] );
+
+		$this->end_controls_section();
+
 		// ── Content: Map Settings ─────────────────────────────────────────
 		$this->start_controls_section( 'section_map', [
 			'label' => __( 'Map Settings', 'rw-dealer-portal' ),
@@ -204,7 +227,7 @@ class RWDP_Dealer_Map_Widget extends \Elementor\Widget_Base {
 			'label'      => __( 'Padding', 'rw-dealer-portal' ),
 			'type'       => \Elementor\Controls_Manager::DIMENSIONS,
 			'size_units' => [ 'px', 'em' ],
-			'selectors'  => [ '{{WRAPPER}} .rwdp-infowindow p' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ],
+			'selectors'  => [ '{{WRAPPER}} .rwdp-infowindow__details' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ],
 		] );
 
 		$this->add_control( 'popup_details_gap', [
@@ -213,6 +236,101 @@ class RWDP_Dealer_Map_Widget extends \Elementor\Widget_Base {
 			'size_units' => [ 'px' ],
 			'range'      => [ 'px' => [ 'min' => 0, 'max' => 30 ] ],
 			'selectors'  => [ '{{WRAPPER}} .rwdp-infowindow p' => 'margin-bottom: {{SIZE}}{{UNIT}};' ],
+		] );
+
+		$this->end_controls_section();
+
+		// ── Style: Popup — Directions Button ─────────────────────────────
+		$this->start_controls_section( 'style_popup_dir_btn', [
+			'label' => __( 'Popup — Directions Button', 'rw-dealer-portal' ),
+			'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
+		] );
+
+		$this->add_group_control( \Elementor\Group_Control_Typography::get_type(), [
+			'name'     => 'popup_dir_btn_typography',
+			'selector' => '{{WRAPPER}} .rwdp-infowindow .rwdp-popup-dir-btn',
+		] );
+
+		$this->add_control( 'popup_dir_icon_size', [
+			'label'      => __( 'Icon Size', 'rw-dealer-portal' ),
+			'type'       => \Elementor\Controls_Manager::SLIDER,
+			'size_units' => [ 'px', 'em', 'rem' ],
+			'range'      => [ 'px' => [ 'min' => 8, 'max' => 60 ] ],
+			'condition'  => [ 'popup_dir_icon[value]!' => '' ],
+			'selectors'  => [
+				'{{WRAPPER}} .rwdp-infowindow .rwdp-popup-dir-btn i'   => 'font-size: {{SIZE}}{{UNIT}};',
+				'{{WRAPPER}} .rwdp-infowindow .rwdp-popup-dir-btn svg' => 'width: {{SIZE}}{{UNIT}}; height: {{SIZE}}{{UNIT}};',
+			],
+		] );
+
+		$this->add_control( 'popup_dir_icon_gap', [
+			'label'      => __( 'Icon Gap', 'rw-dealer-portal' ),
+			'type'       => \Elementor\Controls_Manager::SLIDER,
+			'size_units' => [ 'px', 'em' ],
+			'range'      => [ 'px' => [ 'min' => 0, 'max' => 30 ] ],
+			'condition'  => [ 'popup_dir_icon[value]!' => '' ],
+			'selectors'  => [
+				'{{WRAPPER}} .rwdp-infowindow .rwdp-popup-dir-btn' => 'display: inline-flex; align-items: center; gap: {{SIZE}}{{UNIT}};',
+			],
+		] );
+
+		$this->start_controls_tabs( 'popup_dir_btn_tabs' );
+
+		$this->start_controls_tab( 'popup_dir_btn_normal', [
+			'label' => __( 'Normal', 'rw-dealer-portal' ),
+		] );
+
+		$this->add_control( 'popup_dir_btn_color', [
+			'label'     => __( 'Text Color', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [ '{{WRAPPER}} .rwdp-infowindow .rwdp-popup-dir-btn' => 'color: {{VALUE}};' ],
+		] );
+
+		$this->add_control( 'popup_dir_btn_bg', [
+			'label'     => __( 'Background Color', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [ '{{WRAPPER}} .rwdp-infowindow .rwdp-popup-dir-btn' => 'background-color: {{VALUE}};' ],
+		] );
+
+		$this->end_controls_tab();
+
+		$this->start_controls_tab( 'popup_dir_btn_hover', [
+			'label' => __( 'Hover', 'rw-dealer-portal' ),
+		] );
+
+		$this->add_control( 'popup_dir_btn_color_hover', [
+			'label'     => __( 'Text Color', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [ '{{WRAPPER}} .rwdp-infowindow .rwdp-popup-dir-btn:hover' => 'color: {{VALUE}};' ],
+		] );
+
+		$this->add_control( 'popup_dir_btn_bg_hover', [
+			'label'     => __( 'Background Color', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [ '{{WRAPPER}} .rwdp-infowindow .rwdp-popup-dir-btn:hover' => 'background-color: {{VALUE}};' ],
+		] );
+
+		$this->end_controls_tab();
+		$this->end_controls_tabs();
+
+		$this->add_group_control( \Elementor\Group_Control_Border::get_type(), [
+			'name'      => 'popup_dir_btn_border',
+			'selector'  => '{{WRAPPER}} .rwdp-infowindow .rwdp-popup-dir-btn',
+			'separator' => 'before',
+		] );
+
+		$this->add_control( 'popup_dir_btn_border_radius', [
+			'label'      => __( 'Border Radius', 'rw-dealer-portal' ),
+			'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+			'size_units' => [ 'px', '%', 'em' ],
+			'selectors'  => [ '{{WRAPPER}} .rwdp-infowindow .rwdp-popup-dir-btn' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ],
+		] );
+
+		$this->add_control( 'popup_dir_btn_padding', [
+			'label'      => __( 'Padding', 'rw-dealer-portal' ),
+			'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+			'size_units' => [ 'px', 'em' ],
+			'selectors'  => [ '{{WRAPPER}} .rwdp-infowindow .rwdp-popup-dir-btn' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ],
 		] );
 
 		$this->end_controls_section();
@@ -319,6 +437,17 @@ class RWDP_Dealer_Map_Widget extends \Elementor\Widget_Base {
 			'hours'   => ( $s['show_hours']   ?? 'yes' ) === 'yes' ? '1' : '0',
 			'contact' => ( $s['show_contact'] ?? 'yes' ) === 'yes' ? '1' : '0',
 		];
+
+		$dir_icon_html = '';
+		$dir_icon_pos  = $s['popup_dir_icon_position'] ?? 'before';
+		if ( ! empty( $s['popup_dir_icon']['value'] ) ) {
+			ob_start();
+			\Elementor\Icons_Manager::render_icon( $s['popup_dir_icon'], [
+				'aria-hidden' => 'true',
+				'class'       => 'rwdp-dir-icon',
+			] );
+			$dir_icon_html = ob_get_clean();
+		}
 		?>
 		<div class="rwdp-finder__map-wrap">
 			<div id="rwdp-map" class="rwdp-finder__map"
@@ -327,6 +456,8 @@ class RWDP_Dealer_Map_Widget extends \Elementor\Widget_Base {
 			     data-show-website="<?php echo esc_attr( $toggles['website'] ); ?>"
 			     data-show-hours="<?php echo esc_attr( $toggles['hours'] ); ?>"
 			     data-show-contact="<?php echo esc_attr( $toggles['contact'] ); ?>"
+			     data-directions-icon="<?php echo esc_attr( $dir_icon_html ); ?>"
+			     data-directions-icon-position="<?php echo esc_attr( $dir_icon_pos ); ?>"
 			></div>
 		</div>
 		<?php if ( empty( $plugin_settings['google_maps_api_key'] ) ) : ?>

@@ -70,6 +70,16 @@ class RWDP_Dealer_Search_Widget extends \Elementor\Widget_Base {
 			'type'  => \Elementor\Controls_Manager::ICONS,
 		] );
 
+		$this->add_control( 'icon_only', [
+			'label'        => __( 'Icon Only', 'rw-dealer-portal' ),
+			'type'         => \Elementor\Controls_Manager::SWITCHER,
+			'label_on'     => __( 'Yes', 'rw-dealer-portal' ),
+			'label_off'    => __( 'No', 'rw-dealer-portal' ),
+			'return_value' => 'yes',
+			'default'      => '',
+			'condition'    => [ 'button_icon[value]!' => '' ],
+		] );
+
 		$this->add_control( 'icon_position', [
 			'label'     => __( 'Icon Position', 'rw-dealer-portal' ),
 			'type'      => \Elementor\Controls_Manager::SELECT,
@@ -78,7 +88,20 @@ class RWDP_Dealer_Search_Widget extends \Elementor\Widget_Base {
 				'before' => __( 'Before Text', 'rw-dealer-portal' ),
 				'after'  => __( 'After Text', 'rw-dealer-portal' ),
 			],
-			'condition' => [ 'button_icon[value]!' => '' ],
+			'condition' => [ 'button_icon[value]!' => '', 'icon_only!' => 'yes' ],
+		] );
+
+		$this->add_control( 'icon_size', [
+			'label'      => __( 'Icon Size', 'rw-dealer-portal' ),
+			'type'       => \Elementor\Controls_Manager::SLIDER,
+			'size_units' => [ 'px', 'em', 'rem' ],
+			'range'      => [ 'px' => [ 'min' => 8, 'max' => 80 ] ],
+			'condition'  => [ 'button_icon[value]!' => '' ],
+			'selectors'  => [
+				'{{WRAPPER}} #rwdp-search-btn .rwdp-btn-icon--before,
+				{{WRAPPER}} #rwdp-search-btn .rwdp-btn-icon--after,
+				{{WRAPPER}} #rwdp-search-btn .rwdp-btn-icon--only' => 'font-size: {{SIZE}}{{UNIT}}; width: {{SIZE}}{{UNIT}}; height: {{SIZE}}{{UNIT}};',
+			],
 		] );
 
 		$this->add_control( 'icon_spacing', [
@@ -87,7 +110,7 @@ class RWDP_Dealer_Search_Widget extends \Elementor\Widget_Base {
 			'size_units' => [ 'px' ],
 			'range'      => [ 'px' => [ 'min' => 0, 'max' => 30 ] ],
 			'default'    => [ 'size' => 6, 'unit' => 'px' ],
-			'condition'  => [ 'button_icon[value]!' => '' ],
+			'condition'  => [ 'button_icon[value]!' => '', 'icon_only!' => 'yes' ],
 			'selectors'  => [
 				'{{WRAPPER}} #rwdp-search-btn .rwdp-btn-icon--before' => 'margin-right: {{SIZE}}{{UNIT}};',
 				'{{WRAPPER}} #rwdp-search-btn .rwdp-btn-icon--after'  => 'margin-left: {{SIZE}}{{UNIT}};',
@@ -378,28 +401,35 @@ class RWDP_Dealer_Search_Widget extends \Elementor\Widget_Base {
 		$s              = $this->get_settings_for_display();
 		$dealer_type    = sanitize_text_field( $s['dealer_type'] ?? '' );
 		$placeholder    = $s['placeholder_text'] ?: __( 'Enter ZIP code or city', 'rw-dealer-portal' );
-		$button_text    = $s['button_text'] ?: __( 'Search', 'rw-dealer-portal' );
+		$button_text    = $s['button_text'] ?? '';
 		$show_radius    = ( $s['show_radius'] ?? 'yes' ) === 'yes';
 		$radius         = $s['radius'] ?? '50';
 		$show_type      = ( $s['show_type_filter'] ?? 'yes' ) === 'yes';
 		$has_icon       = ! empty( $s['button_icon']['value'] );
+		$icon_only      = $has_icon && ( $s['icon_only'] ?? '' ) === 'yes';
 		$icon_position  = $s['icon_position'] ?? 'before';
 
 		// Build button inner HTML with optional icon
-		$icon_html   = '';
+		$icon_html = '';
 		if ( $has_icon ) {
+			$icon_class = $icon_only ? 'rwdp-btn-icon--only' : 'rwdp-btn-icon--' . esc_attr( $icon_position );
 			ob_start();
 			\Elementor\Icons_Manager::render_icon( $s['button_icon'], [
 				'aria-hidden' => 'true',
-				'class'       => 'rwdp-btn-icon--' . esc_attr( $icon_position ),
+				'class'       => $icon_class,
 			] );
 			$icon_html = ob_get_clean();
 		}
 
-		$button_label = esc_html( $button_text );
-		$button_inner = ( $has_icon && $icon_position === 'before' )
-			? $icon_html . '<span>' . $button_label . '</span>'
-			: '<span>' . $button_label . '</span>' . $icon_html;
+		if ( $icon_only ) {
+			$button_inner = $icon_html;
+		} else {
+			$label        = $button_text ?: __( 'Search', 'rw-dealer-portal' );
+			$button_label = esc_html( $label );
+			$button_inner = ( $has_icon && $icon_position === 'before' )
+				? $icon_html . '<span>' . $button_label . '</span>'
+				: '<span>' . $button_label . '</span>' . $icon_html;
+		}
 		?>
 		<div class="rwdp-dealer-finder" id="rwdp-dealer-finder"
 		     data-locked-type="<?php echo esc_attr( $dealer_type ); ?>">
