@@ -2,12 +2,12 @@
    RW Dealer Portal — Dealer Finder / Map Styles
    ========================================================= */
 
-/* ---- Finder layout ---- */
+/* ---- Finder layout ---- 
 .rwdp-dealer-finder {
   max-width: 1100px;
   margin: 0 auto;
   padding: 0;
-}
+}*/
 
 /* ---- Controls row ---- */
 .rwdp-finder__controls {

@@ -159,6 +159,20 @@ class RWDP_Dealer_Search_Widget extends \Elementor\Widget_Base {
 			'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
 		] );
 
+		$this->add_responsive_control( 'input_width', [
+			'label'      => __( 'Max Width', 'rw-dealer-portal' ),
+			'type'       => \Elementor\Controls_Manager::SLIDER,
+			'size_units' => [ 'px', '%', 'em', 'rem' ],
+			'range'      => [
+				'px'  => [ 'min' => 50, 'max' => 1200 ],
+				'%'   => [ 'min' => 1,  'max' => 100 ],
+				'em'  => [ 'min' => 1,  'max' => 80 ],
+				'rem' => [ 'min' => 1,  'max' => 80 ],
+			],
+			'default'    => [ 'size' => 100, 'unit' => '%' ],
+			'selectors'  => [ '{{WRAPPER}} .rwdp-finder__input' => 'width: 100%; max-width: {{SIZE}}{{UNIT}};' ],
+		] );
+
 		$this->add_group_control( \Elementor\Group_Control_Typography::get_type(), [
 			'name'     => 'input_typography',
 			'selector' => '{{WRAPPER}} .rwdp-finder__input',
