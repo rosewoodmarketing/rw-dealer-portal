@@ -25,11 +25,11 @@ class Updater {
 			add_filter( 'http_request_host_is_external', '__return_true' );
 		}
 
-		$this->plugin_slug   = dirname( plugin_basename( RWDP_PLUGIN_DIR ) );
+		$this->basename      = plugin_basename( RWDP_PLUGIN_DIR . $this->plugin_file );
+		$this->plugin_slug   = dirname( $this->basename );
 		$this->version       = RWDP_VERSION;
 		$this->cache_key     = 'rwdp_github_updater';
 		$this->cache_allowed = true;
-		$this->basename      = $this->plugin_slug . '/' . $this->plugin_file;
 		$this->auth_token    = defined( 'RWDP_GITHUB_TOKEN' ) ? RWDP_GITHUB_TOKEN : '';
 
 		add_filter( 'plugins_api',                                [ $this, 'info'    ], 20, 3 );
