@@ -98,9 +98,8 @@ class RWDP_Dealer_Search_Widget extends \Elementor\Widget_Base {
 			'range'      => [ 'px' => [ 'min' => 8, 'max' => 80 ] ],
 			'condition'  => [ 'button_icon[value]!' => '' ],
 			'selectors'  => [
-				'{{WRAPPER}} #rwdp-search-btn .rwdp-btn-icon--before,
-				{{WRAPPER}} #rwdp-search-btn .rwdp-btn-icon--after,
-				{{WRAPPER}} #rwdp-search-btn .rwdp-btn-icon--only' => 'font-size: {{SIZE}}{{UNIT}}; width: {{SIZE}}{{UNIT}}; height: {{SIZE}}{{UNIT}};',
+				'{{WRAPPER}} #rwdp-search-btn i'   => 'font-size: {{SIZE}}{{UNIT}};',
+				'{{WRAPPER}} #rwdp-search-btn svg' => 'width: {{SIZE}}{{UNIT}}; height: {{SIZE}}{{UNIT}};',
 			],
 		] );
 

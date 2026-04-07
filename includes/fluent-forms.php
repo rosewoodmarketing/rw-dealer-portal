@@ -4,58 +4,52 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 add_action( 'fluentform_submission_inserted', 'rwdp_handle_fluent_form_submission', 10, 3 );
 
 /**
- * When a Fluent Forms submission is inserted, check if the form is the configured
- * contact form and if so, store it as an rw_submission CPT and send CC emails.
+ * When a Fluent Forms submission is inserted, check if it is the configured contact
+ * form and if so, tag the FF entry with the dealer ID and send CC emails.
+ *
+ * The entry is tagged by inserting a row into FF's own submission_meta table
+ * (meta_key = 'rwdp_dealer_id'). No duplicate CPT post is created.
  *
  * @param int    $entry_id   Fluent Forms entry ID.
  * @param array  $form_data  Submitted form data (name → value pairs).
  * @param object $form       Fluent Forms form object.
  */
 function rwdp_handle_fluent_form_submission( $entry_id, $form_data, $form ) {
-	$settings     = get_option( 'rwdp_settings', [] );
-	$target_form  = absint( $settings['contact_form_id'] ?? 0 );
+	$settings    = get_option( 'rwdp_settings', [] );
+	$target_form = absint( $settings['contact_form_id'] ?? 0 );
 
 	if ( ! $target_form || absint( $form->id ) !== $target_form ) {
 		return;
 	}
 
-	// Extract dealer ID from form data — form must contain a hidden field named rwdp_dealer_id
+	// Form must contain a hidden field named rwdp_dealer_id.
 	$dealer_id = absint( rwdp_ff_extract( $form_data, 'rwdp_dealer_id' ) );
 	if ( ! $dealer_id || get_post_type( $dealer_id ) !== 'rw_dealer' ) {
 		return;
 	}
 
-	$name    = sanitize_text_field( rwdp_ff_extract( $form_data, [ 'name', 'full_name', 'first_name', 'your_name',      'names'    ] ) );
-	$email   = sanitize_email(      rwdp_ff_extract( $form_data, [ 'email', 'your_email', 'email_address'              ] ) );
-	$phone   = sanitize_text_field( rwdp_ff_extract( $form_data, [ 'phone', 'phone_number', 'telephone', 'your_phone'  ] ) );
+	// Tag this FF entry with the dealer ID using FF's own submission_meta table.
+	global $wpdb;
+	$now = current_time( 'mysql', true ); // UTC
+	$wpdb->insert(
+		$wpdb->prefix . 'fluentform_submission_meta',
+		[
+			'response_id' => $entry_id,
+			'form_id'     => absint( $form->id ),
+			'meta_key'    => 'rwdp_dealer_id',
+			'value'       => $dealer_id,
+			'created_at'  => $now,
+			'updated_at'  => $now,
+		],
+		[ '%d', '%d', '%s', '%d', '%s', '%s' ]
+	);
+
+	// Send CC notification emails — best-effort field extraction for email body.
+	$name    = sanitize_text_field( rwdp_ff_extract( $form_data, [ 'name', 'full_name', 'first_name', 'your_name', 'names' ] ) );
+	$email   = sanitize_email(      rwdp_ff_extract( $form_data, [ 'email', 'your_email', 'email_address' ] ) );
+	$phone   = sanitize_text_field( rwdp_ff_extract( $form_data, [ 'phone', 'phone_number', 'telephone', 'your_phone' ] ) );
 	$message = sanitize_textarea_field( rwdp_ff_extract( $form_data, [ 'message', 'your_message', 'comment', 'inquiry' ] ) );
-	$dealer_name = get_the_title( $dealer_id );
 
-	// Create the rw_submission CPT
-	$post_id = wp_insert_post( [
-		'post_type'   => 'rw_submission',
-		'post_status' => 'publish',
-		'post_title'  => sprintf(
-			/* translators: 1: customer name, 2: dealer name */
-			__( 'Request from %1$s to %2$s', 'rw-dealer-portal' ),
-			$name ?: __( 'Unknown', 'rw-dealer-portal' ),
-			$dealer_name
-		),
-	] );
-
-	if ( is_wp_error( $post_id ) ) {
-		return;
-	}
-
-	update_post_meta( $post_id, '_rwdp_dealer_id',        $dealer_id );
-	update_post_meta( $post_id, '_rwdp_customer_name',    $name );
-	update_post_meta( $post_id, '_rwdp_customer_email',   $email );
-	update_post_meta( $post_id, '_rwdp_customer_phone',   $phone );
-	update_post_meta( $post_id, '_rwdp_customer_message', $message );
-	update_post_meta( $post_id, '_rwdp_ff_entry_id',      $entry_id );
-	update_post_meta( $post_id, '_rwdp_form_id',          absint( $form->id ) );
-
-	// Send CC emails to dealer contact addresses + global CC list
 	rwdp_send_submission_cc( $dealer_id, [
 		'name'    => $name,
 		'email'   => $email,

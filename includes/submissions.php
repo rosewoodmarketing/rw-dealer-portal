@@ -11,36 +11,59 @@ function rwdp_my_requests_shortcode() {
 	wp_enqueue_style( 'rwdp-portal', RWDP_PLUGIN_URL . 'assets/css/portal.css', [ 'dashicons' ], RWDP_VERSION );
 
 	$user       = wp_get_current_user();
-	$dealer_ids = (array) get_user_meta( $user->ID, '_rwdp_dealer_ids', true );
-	$dealer_ids = array_filter( array_map( 'absint', $dealer_ids ) );
+	$dealer_ids = array_values( array_filter( array_map( 'absint', (array) get_user_meta( $user->ID, '_rwdp_dealer_ids', true ) ) ) );
 
 	if ( empty( $dealer_ids ) ) {
 		return '<div class="rwdp-portal"><p>' . esc_html__( 'You are not linked to any dealer account. Contact your administrator.', 'rw-dealer-portal' ) . '</p></div>';
 	}
 
-	$paged = max( 1, absint( get_query_var( 'paged' ) ?: ( $_GET['rwdp_page'] ?? 1 ) ) );
+	$settings = get_option( 'rwdp_settings', [] );
+	$form_id  = absint( $settings['contact_form_id'] ?? 0 );
 
-	$query = new WP_Query( [
-		'post_type'      => 'rw_submission',
-		'post_status'    => 'publish',
-		'posts_per_page' => 20,
-		'paged'          => $paged,
-		'orderby'        => 'date',
-		'order'          => 'DESC',
-		'meta_query'     => [ [
-			'key'     => '_rwdp_dealer_id',
-			'value'   => $dealer_ids,
-			'compare' => 'IN',
-			'type'    => 'NUMERIC',
-		] ],
-	] );
+	if ( ! $form_id ) {
+		return '<div class="rwdp-portal"><p>' . esc_html__( 'Contact form not configured. Contact your site administrator.', 'rw-dealer-portal' ) . '</p></div>';
+	}
+
+	global $wpdb;
+	$paged    = max( 1, absint( get_query_var( 'paged' ) ?: ( $_GET['rwdp_page'] ?? 1 ) ) );
+	$per_page = 20;
+	$offset   = ( $paged - 1 ) * $per_page;
+	$table_s  = $wpdb->prefix . 'fluentform_submissions';
+	$table_m  = $wpdb->prefix . 'fluentform_submission_meta';
+
+	$placeholders = implode( ',', array_fill( 0, count( $dealer_ids ), '%d' ) );
+
+	// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$rows = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT s.id, s.form_id, s.response, s.created_at, CAST(m.value AS UNSIGNED) AS dealer_id
+			 FROM {$table_s} s
+			 INNER JOIN {$table_m} m ON m.response_id = s.id AND m.meta_key = 'rwdp_dealer_id'
+			 WHERE s.form_id = %d AND CAST(m.value AS UNSIGNED) IN ({$placeholders})
+			 ORDER BY s.created_at DESC
+			 LIMIT %d OFFSET %d",
+			array_merge( [ $form_id ], $dealer_ids, [ $per_page, $offset ] )
+		)
+	);
+
+	$total       = (int) $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT COUNT(*) FROM {$table_s} s
+			 INNER JOIN {$table_m} m ON m.response_id = s.id AND m.meta_key = 'rwdp_dealer_id'
+			 WHERE s.form_id = %d AND CAST(m.value AS UNSIGNED) IN ({$placeholders})",
+			array_merge( [ $form_id ], $dealer_ids )
+		)
+	);
+	// phpcs:enable
+
+	$total_pages = (int) ceil( $total / $per_page );
 
 	ob_start();
 	?>
 	<div class="rwdp-portal rwdp-requests">
 		<h2><?php esc_html_e( 'Contact Requests', 'rw-dealer-portal' ); ?></h2>
 
-		<?php if ( ! $query->have_posts() ) : ?>
+		<?php if ( empty( $rows ) ) : ?>
 			<p><?php esc_html_e( 'No contact requests yet.', 'rw-dealer-portal' ); ?></p>
 		<?php else : ?>
 
@@ -56,32 +79,32 @@ function rwdp_my_requests_shortcode() {
 					</tr>
 				</thead>
 				<tbody>
-					<?php while ( $query->have_posts() ) : $query->the_post();
-						$did    = (int) get_post_meta( get_the_ID(), '_rwdp_dealer_id', true );
-						$dealer_obj = $did ? get_post( $did ) : null;
+					<?php foreach ( $rows as $row ) :
+						$data       = json_decode( $row->response, true ) ?: [];
+						$dealer_obj = $row->dealer_id ? get_post( (int) $row->dealer_id ) : null;
 					?>
 					<tr>
-						<td><?php echo get_the_date(); ?></td>
-						<td><?php echo esc_html( get_post_meta( get_the_ID(), '_rwdp_customer_name', true ) ); ?></td>
+						<td><?php echo esc_html( date_i18n( get_option( 'date_format' ), strtotime( $row->created_at ) ) ); ?></td>
+						<td><?php echo esc_html( rwdp_ff_extract( $data, [ 'name', 'full_name', 'first_name', 'your_name', 'names' ] ) ?: '—' ); ?></td>
 						<td>
 							<?php
-							$cust_email = get_post_meta( get_the_ID(), '_rwdp_customer_email', true );
-							if ( $cust_email ) echo '<a href="mailto:' . esc_attr( $cust_email ) . '">' . esc_html( $cust_email ) . '</a>';
+							$cust_email = sanitize_email( rwdp_ff_extract( $data, [ 'email', 'your_email', 'email_address' ] ) );
+							echo $cust_email ? '<a href="mailto:' . esc_attr( $cust_email ) . '">' . esc_html( $cust_email ) . '</a>' : '—';
 							?>
 						</td>
-						<td><?php echo esc_html( get_post_meta( get_the_ID(), '_rwdp_customer_phone', true ) ); ?></td>
-						<td class="rwdp-requests-table__message"><?php echo wp_kses_post( wpautop( get_post_meta( get_the_ID(), '_rwdp_customer_message', true ) ) ); ?></td>
+						<td><?php echo esc_html( rwdp_ff_extract( $data, [ 'phone', 'phone_number', 'telephone', 'your_phone' ] ) ?: '—' ); ?></td>
+						<td class="rwdp-requests-table__message"><?php echo wp_kses_post( wpautop( rwdp_ff_extract( $data, [ 'message', 'your_message', 'comment', 'inquiry' ] ) ?: '—' ) ); ?></td>
 						<td><?php echo $dealer_obj ? esc_html( $dealer_obj->post_title ) : '—'; ?></td>
 					</tr>
-					<?php endwhile; wp_reset_postdata(); ?>
+					<?php endforeach; ?>
 				</tbody>
 			</table>
 
-			<?php if ( $query->max_num_pages > 1 ) :
+			<?php if ( $total_pages > 1 ) :
 				$base_url = add_query_arg( 'rwdp_page', '%#%', get_permalink() );
 			?>
 			<div class="rwdp-pagination">
-				<?php for ( $i = 1; $i <= $query->max_num_pages; $i++ ) : ?>
+				<?php for ( $i = 1; $i <= $total_pages; $i++ ) : ?>
 					<a href="<?php echo esc_url( str_replace( '%25%23%25', $i, $base_url ) ); ?>"
 					   class="rwdp-page-btn<?php echo $i === $paged ? ' active' : ''; ?>">
 						<?php echo absint( $i ); ?>
@@ -110,45 +133,64 @@ function rwdp_admin_submissions_page() {
 		exit;
 	}
 
+	$settings      = get_option( 'rwdp_settings', [] );
+	$form_id       = absint( $settings['contact_form_id'] ?? 0 );
 	$dealer_filter = absint( $_GET['rwdp_dealer'] ?? 0 );
 	$date_from     = sanitize_text_field( wp_unslash( $_GET['rwdp_date_from'] ?? '' ) );
 	$date_to       = sanitize_text_field( wp_unslash( $_GET['rwdp_date_to']   ?? '' ) );
+	$paged         = max( 1, absint( $_GET['paged'] ?? 1 ) );
+	$per_page      = 30;
+	$offset        = ( $paged - 1 ) * $per_page;
 
-	$meta_query = [];
-	if ( $dealer_filter ) {
-		$meta_query[] = [
-			'key'     => '_rwdp_dealer_id',
-			'value'   => $dealer_filter,
-			'compare' => '=',
-			'type'    => 'NUMERIC',
-		];
+	$dealers     = get_posts( [ 'post_type' => 'rw_dealer', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC' ] );
+	$rows        = [];
+	$total_pages = 0;
+
+	if ( $form_id ) {
+		global $wpdb;
+		$table_s = $wpdb->prefix . 'fluentform_submissions';
+		$table_m = $wpdb->prefix . 'fluentform_submission_meta';
+
+		// Each clause is individually prepared; table names come from $wpdb->prefix (safe).
+		$where_clauses = [ $wpdb->prepare( 's.form_id = %d', $form_id ) ];
+		if ( $dealer_filter ) {
+			$where_clauses[] = $wpdb->prepare( 'CAST(m.value AS UNSIGNED) = %d', $dealer_filter );
+		}
+		if ( $date_from ) {
+			$where_clauses[] = $wpdb->prepare( 'DATE(s.created_at) >= %s', $date_from );
+		}
+		if ( $date_to ) {
+			$where_clauses[] = $wpdb->prepare( 'DATE(s.created_at) <= %s', $date_to );
+		}
+		$where_sql = 'WHERE ' . implode( ' AND ', $where_clauses );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$total = (int) $wpdb->get_var(
+			"SELECT COUNT(*) FROM {$table_s} s
+			 INNER JOIN {$table_m} m ON m.response_id = s.id AND m.meta_key = 'rwdp_dealer_id'
+			 {$where_sql}"
+		);
+		$rows  = $wpdb->get_results(
+			"SELECT s.id, s.form_id, s.response, s.created_at, CAST(m.value AS UNSIGNED) AS dealer_id
+			 FROM {$table_s} s
+			 INNER JOIN {$table_m} m ON m.response_id = s.id AND m.meta_key = 'rwdp_dealer_id'
+			 {$where_sql}
+			 ORDER BY s.created_at DESC
+			 LIMIT {$per_page} OFFSET {$offset}"
+		);
+		// phpcs:enable
+		$total_pages = (int) ceil( $total / $per_page );
 	}
-
-	$date_query = [];
-	if ( $date_from ) {
-		$date_query[] = [ 'after' => $date_from, 'inclusive' => true ];
-	}
-	if ( $date_to ) {
-		$date_query[] = [ 'before' => $date_to, 'inclusive' => true ];
-	}
-
-	$paged = max( 1, absint( $_GET['paged'] ?? 1 ) );
-
-	$query = new WP_Query( [
-		'post_type'      => 'rw_submission',
-		'post_status'    => 'publish',
-		'posts_per_page' => 30,
-		'paged'          => $paged,
-		'orderby'        => 'date',
-		'order'          => 'DESC',
-		'meta_query'     => $meta_query ?: [],
-		'date_query'     => $date_query  ?: [],
-	] );
-
-	$dealers = get_posts( [ 'post_type' => 'rw_dealer', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC' ] );
 	?>
 	<div class="wrap">
 		<h1><?php esc_html_e( 'Contact Submissions', 'rw-dealer-portal' ); ?></h1>
+
+		<?php if ( ! $form_id ) : ?>
+			<div class="notice notice-warning"><p>
+				<?php esc_html_e( 'No contact form is configured. Please set one in ', 'rw-dealer-portal' ); ?>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=rwdp-settings' ) ); ?>"><?php esc_html_e( 'RW Dealer Portal → Settings', 'rw-dealer-portal' ); ?></a>.
+			</p></div>
+		<?php endif; ?>
 
 		<form method="get" class="rwdp-filters">
 			<input type="hidden" name="page" value="rwdp-submissions" />
@@ -178,9 +220,9 @@ function rwdp_admin_submissions_page() {
 			) ); ?>" class="button button-secondary"><?php esc_html_e( 'Export CSV', 'rw-dealer-portal' ); ?></a>
 		</form>
 
-		<?php if ( ! $query->have_posts() ) : ?>
+		<?php if ( $form_id && empty( $rows ) ) : ?>
 			<p><?php esc_html_e( 'No submissions found.', 'rw-dealer-portal' ); ?></p>
-		<?php else : ?>
+		<?php elseif ( ! empty( $rows ) ) : ?>
 			<table class="wp-list-table widefat striped">
 				<thead>
 					<tr>
@@ -190,27 +232,28 @@ function rwdp_admin_submissions_page() {
 						<th><?php esc_html_e( 'Phone', 'rw-dealer-portal' ); ?></th>
 						<th><?php esc_html_e( 'Message', 'rw-dealer-portal' ); ?></th>
 						<th><?php esc_html_e( 'Dealer', 'rw-dealer-portal' ); ?></th>
-						<th><?php esc_html_e( 'Entry ID', 'rw-dealer-portal' ); ?></th>
+						<th><?php esc_html_e( 'Details', 'rw-dealer-portal' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
-					<?php while ( $query->have_posts() ) : $query->the_post();
-						$did        = (int) get_post_meta( get_the_ID(), '_rwdp_dealer_id', true );
-						$dealer_obj = $did ? get_post( $did ) : null;
+					<?php foreach ( $rows as $row ) :
+						$data       = json_decode( $row->response, true ) ?: [];
+						$dealer_obj = $row->dealer_id ? get_post( (int) $row->dealer_id ) : null;
+						$entry_url  = admin_url( 'admin.php?page=fluent_forms&route=entries&form_id=' . absint( $row->form_id ) . '#/entries/' . absint( $row->id ) );
 					?>
 					<tr>
-						<td><?php echo get_the_date( 'Y-m-d H:i' ); ?></td>
-						<td><?php echo esc_html( get_post_meta( get_the_ID(), '_rwdp_customer_name',    true ) ); ?></td>
+						<td><?php echo esc_html( date_i18n( 'Y-m-d H:i', strtotime( $row->created_at ) ) ); ?></td>
+						<td><?php echo esc_html( rwdp_ff_extract( $data, [ 'name', 'full_name', 'first_name', 'your_name', 'names' ] ) ?: '—' ); ?></td>
 						<td><?php
-							$ce = get_post_meta( get_the_ID(), '_rwdp_customer_email', true );
-							if ( $ce ) echo '<a href="mailto:' . esc_attr( $ce ) . '">' . esc_html( $ce ) . '</a>';
+							$ce = sanitize_email( rwdp_ff_extract( $data, [ 'email', 'your_email', 'email_address' ] ) );
+							echo $ce ? '<a href="mailto:' . esc_attr( $ce ) . '">' . esc_html( $ce ) . '</a>' : '—';
 						?></td>
-						<td><?php echo esc_html( get_post_meta( get_the_ID(), '_rwdp_customer_phone',   true ) ); ?></td>
-						<td><?php echo wp_kses_post( wpautop( get_post_meta( get_the_ID(), '_rwdp_customer_message', true ) ) ); ?></td>
+						<td><?php echo esc_html( rwdp_ff_extract( $data, [ 'phone', 'phone_number', 'telephone', 'your_phone' ] ) ?: '—' ); ?></td>
+						<td><?php echo wp_kses_post( wpautop( rwdp_ff_extract( $data, [ 'message', 'your_message', 'comment', 'inquiry' ] ) ?: '—' ) ); ?></td>
 						<td><?php echo $dealer_obj ? esc_html( $dealer_obj->post_title ) : '—'; ?></td>
-						<td><?php echo absint( get_post_meta( get_the_ID(), '_rwdp_ff_entry_id', true ) ); ?></td>
+						<td><a href="<?php echo esc_url( $entry_url ); ?>" class="button button-small" target="_blank" rel="noopener"><?php esc_html_e( 'View Entry', 'rw-dealer-portal' ); ?></a></td>
 					</tr>
-					<?php endwhile; wp_reset_postdata(); ?>
+					<?php endforeach; ?>
 				</tbody>
 			</table>
 
@@ -221,7 +264,7 @@ function rwdp_admin_submissions_page() {
 						'base'      => add_query_arg( 'paged', '%#%' ),
 						'format'    => '',
 						'current'   => $paged,
-						'total'     => $query->max_num_pages,
+						'total'     => $total_pages,
 						'prev_text' => '&laquo;',
 						'next_text' => '&raquo;',
 					] );
@@ -241,52 +284,62 @@ function rwdp_export_submissions_csv() {
 		wp_die( esc_html__( 'Permission denied.', 'rw-dealer-portal' ) );
 	}
 
+	$settings      = get_option( 'rwdp_settings', [] );
+	$form_id       = absint( $settings['contact_form_id'] ?? 0 );
 	$dealer_filter = absint( $_GET['rwdp_dealer'] ?? 0 );
 	$date_from     = sanitize_text_field( wp_unslash( $_GET['rwdp_date_from'] ?? '' ) );
 	$date_to       = sanitize_text_field( wp_unslash( $_GET['rwdp_date_to']   ?? '' ) );
 
-	$meta_query = [];
-	if ( $dealer_filter ) {
-		$meta_query[] = [
-			'key'     => '_rwdp_dealer_id',
-			'value'   => $dealer_filter,
-			'compare' => '=',
-			'type'    => 'NUMERIC',
-		];
+	$rows = [];
+
+	if ( $form_id ) {
+		global $wpdb;
+		$table_s = $wpdb->prefix . 'fluentform_submissions';
+		$table_m = $wpdb->prefix . 'fluentform_submission_meta';
+
+		$where_clauses = [ $wpdb->prepare( 's.form_id = %d', $form_id ) ];
+		if ( $dealer_filter ) {
+			$where_clauses[] = $wpdb->prepare( 'CAST(m.value AS UNSIGNED) = %d', $dealer_filter );
+		}
+		if ( $date_from ) {
+			$where_clauses[] = $wpdb->prepare( 'DATE(s.created_at) >= %s', $date_from );
+		}
+		if ( $date_to ) {
+			$where_clauses[] = $wpdb->prepare( 'DATE(s.created_at) <= %s', $date_to );
+		}
+		$where_sql = 'WHERE ' . implode( ' AND ', $where_clauses );
+
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			"SELECT s.id, s.form_id, s.response, s.created_at, CAST(m.value AS UNSIGNED) AS dealer_id
+			 FROM {$table_s} s
+			 INNER JOIN {$table_m} m ON m.response_id = s.id AND m.meta_key = 'rwdp_dealer_id'
+			 {$where_sql}
+			 ORDER BY s.created_at DESC"
+		);
+		// phpcs:enable
 	}
-
-	$date_query = [];
-	if ( $date_from ) $date_query[] = [ 'after' => $date_from, 'inclusive' => true ];
-	if ( $date_to )   $date_query[] = [ 'before' => $date_to,  'inclusive' => true ];
-
-	$submissions = get_posts( [
-		'post_type'      => 'rw_submission',
-		'post_status'    => 'publish',
-		'posts_per_page' => -1,
-		'orderby'        => 'date',
-		'order'          => 'DESC',
-		'meta_query'     => $meta_query ?: [],
-		'date_query'     => $date_query  ?: [],
-	] );
 
 	header( 'Content-Type: text/csv; charset=utf-8' );
 	header( 'Content-Disposition: attachment; filename="submissions-' . date( 'Y-m-d' ) . '.csv"' );
 	header( 'Cache-Control: no-cache, no-store, must-revalidate' );
 
 	$out = fopen( 'php://output', 'w' );
-	fputcsv( $out, [ 'Date', 'Name', 'Email', 'Phone', 'Message', 'Dealer', 'Entry ID' ] );
+	fputcsv( $out, [ 'Date', 'Name', 'Email', 'Phone', 'Message', 'Dealer', 'Entry ID', 'Entry URL' ] );
 
-	foreach ( $submissions as $sub ) {
-		$did  = (int) get_post_meta( $sub->ID, '_rwdp_dealer_id', true );
-		$d    = $did ? get_post( $did ) : null;
+	foreach ( $rows as $row ) {
+		$data       = json_decode( $row->response, true ) ?: [];
+		$dealer_obj = $row->dealer_id ? get_post( (int) $row->dealer_id ) : null;
+		$entry_url  = admin_url( 'admin.php?page=fluent_forms&route=entries&form_id=' . absint( $row->form_id ) . '#/entries/' . absint( $row->id ) );
 		fputcsv( $out, [
-			get_the_date( 'Y-m-d H:i', $sub ),
-			get_post_meta( $sub->ID, '_rwdp_customer_name',    true ),
-			get_post_meta( $sub->ID, '_rwdp_customer_email',   true ),
-			get_post_meta( $sub->ID, '_rwdp_customer_phone',   true ),
-			get_post_meta( $sub->ID, '_rwdp_customer_message', true ),
-			$d ? $d->post_title : '',
-			get_post_meta( $sub->ID, '_rwdp_ff_entry_id', true ),
+			date_i18n( 'Y-m-d H:i', strtotime( $row->created_at ) ),
+			rwdp_ff_extract( $data, [ 'name', 'full_name', 'first_name', 'your_name', 'names' ] ),
+			rwdp_ff_extract( $data, [ 'email', 'your_email', 'email_address' ] ),
+			rwdp_ff_extract( $data, [ 'phone', 'phone_number', 'telephone', 'your_phone' ] ),
+			rwdp_ff_extract( $data, [ 'message', 'your_message', 'comment', 'inquiry' ] ),
+			$dealer_obj ? $dealer_obj->post_title : '',
+			$row->id,
+			$entry_url,
 		] );
 	}
 

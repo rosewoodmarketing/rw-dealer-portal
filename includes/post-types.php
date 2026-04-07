@@ -58,23 +58,4 @@ function rwdp_register_post_types() {
 		'map_meta_cap'       => true,
 	] );
 
-	// ── Submission CPT ──────────────────────────────────────────────────────
-	register_post_type( 'rw_submission', [
-		'labels' => [
-			'name'               => __( 'Contact Submissions', 'rw-dealer-portal' ),
-			'singular_name'      => __( 'Submission', 'rw-dealer-portal' ),
-			'view_item'          => __( 'View Submission', 'rw-dealer-portal' ),
-			'search_items'       => __( 'Search Submissions', 'rw-dealer-portal' ),
-			'not_found'          => __( 'No submissions found', 'rw-dealer-portal' ),
-		],
-		'public'             => false,
-		'show_ui'            => false,
-		'show_in_menu'       => false,
-		'show_in_rest'       => false,
-		'supports'           => [ 'title' ],
-		'has_archive'        => false,
-		'rewrite'            => false,
-		'capability_type'    => 'post',
-		'map_meta_cap'       => true,
-	] );
 }

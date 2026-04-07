@@ -4,7 +4,7 @@ Tags: dealer, dealer finder, dealer portal, dealer locator, elementor
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.0.4
+Stable tag: 1.0.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -62,6 +62,20 @@ Use the **Lock to Dealer Type** control on the Dealer Search Bar widget and ente
 4. Plugin settings screen (Google Maps API key, page assignments).
 
 == Changelog ==
+
+= 1.0.6 =
+* Changed: Contact form submissions are no longer stored as a custom post type. The Fluent Forms entry is tagged with the dealer ID in FF's own submission_meta table instead.
+* Changed: Admin Contact Submissions page and portal [rwdp_my_requests] shortcode now query FF's tables directly — all form fields are displayed regardless of field naming.
+* Added: "View Entry" button on each admin table row links directly to the full Fluent Forms entry detail page.
+* Added: CSV export now includes Entry ID and Entry URL columns.
+* Added: "Not configured" notice on admin submissions page when no contact form is set.
+
+= 1.0.5 =
+* Fixed: Icon Size control on the Search Bar widget now correctly targets rendered `<i>` and `<svg>` elements.
+* Added: Get Directions button moved to Content tab on Dealer Results List widget; icon position (before/after) control added.
+* Added: Editable "Get Directions" button text on both the Dealer Map and Dealer Results List widgets.
+* Added: Editable "View on Map" button text on the Dealer Results List widget.
+* Improved: Contact button text labels now clarify context — "Contact Button Text (card)" on the List widget and "Contact Button Text (popup)" on the Map widget.
 
 = 1.0.4 =
 * Added: Icon and icon position controls to the Get Directions button on the Dealer Map widget popup.

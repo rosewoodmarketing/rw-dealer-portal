@@ -60,11 +60,24 @@ class RWDP_Dealer_Map_Widget extends \Elementor\Widget_Base {
 			] );
 		}
 
+		$this->add_control( 'contact_text', [
+			'label'     => __( 'Contact Button Text (popup)', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::TEXT,
+			'default'   => __( 'Contact This Dealer', 'rw-dealer-portal' ),
+			'condition' => [ 'show_contact' => 'yes' ],
+		] );
+
 		$this->end_controls_section();
 
 		// ── Content: Popup — Directions Button ───────────────────────────
 		$this->start_controls_section( 'section_popup_dir_btn', [
 			'label' => __( 'Popup — Directions Button', 'rw-dealer-portal' ),
+		] );
+
+		$this->add_control( 'directions_text', [
+			'label'   => __( 'Button Text', 'rw-dealer-portal' ),
+			'type'    => \Elementor\Controls_Manager::TEXT,
+			'default' => __( 'Get Directions', 'rw-dealer-portal' ),
 		] );
 
 		$this->add_control( 'popup_dir_icon', [
@@ -456,6 +469,8 @@ class RWDP_Dealer_Map_Widget extends \Elementor\Widget_Base {
 			     data-show-website="<?php echo esc_attr( $toggles['website'] ); ?>"
 			     data-show-hours="<?php echo esc_attr( $toggles['hours'] ); ?>"
 			     data-show-contact="<?php echo esc_attr( $toggles['contact'] ); ?>"
+			     data-contact-text="<?php echo esc_attr( $s['contact_text'] ?? __( 'Contact This Dealer', 'rw-dealer-portal' ) ); ?>"
+			     data-directions-text="<?php echo esc_attr( $s['directions_text'] ?? __( 'Get Directions', 'rw-dealer-portal' ) ); ?>"
 			     data-directions-icon="<?php echo esc_attr( $dir_icon_html ); ?>"
 			     data-directions-icon-position="<?php echo esc_attr( $dir_icon_pos ); ?>"
 			></div>

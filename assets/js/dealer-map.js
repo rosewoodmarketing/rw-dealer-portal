@@ -35,7 +35,9 @@ var rwdpInitMap; // exposed globally for Google Maps callback
       phone   : $map.data('show-phone')   !== 0 && $map.data('show-phone')   !== '0',
       website : $map.data('show-website') !== 0 && $map.data('show-website') !== '0',
       hours   : $map.data('show-hours')   !== 0 && $map.data('show-hours')   !== '0',
-      contact : $map.data('show-contact') !== 0 && $map.data('show-contact') !== '0',
+      contact         : $map.data('show-contact') !== 0 && $map.data('show-contact') !== '0',
+      contact_text    : $map.data('contact-text')    || rwdpMap.contactText    || 'Contact This Dealer',
+      directions_text : $map.data('directions-text') || rwdpMap.directionsText || 'Get Directions',
     };
   }
 
@@ -68,15 +70,15 @@ var rwdpInitMap; // exposed globally for Google Maps callback
       var dirIconHtml = $('#rwdp-map').attr('data-directions-icon') || '';
       var dirIconPos  = $('#rwdp-map').attr('data-directions-icon-position') || 'before';
       var dirInner    = dirIconPos === 'before'
-          ? dirIconHtml + rwdpMap.directionsText
-          : rwdpMap.directionsText + dirIconHtml;
+          ? dirIconHtml + show.directions_text
+          : show.directions_text + dirIconHtml;
       html += '<a href="' + mapsUrl + '" class="rwdp-btn rwdp-btn--outline rwdp-btn--sm rwdp-popup-dir-btn" target="_blank" rel="noopener noreferrer">' + dirInner + '</a>';
     }
 
     html += '</div>';
 
     if ( show.contact ) {
-        html += '<button type="button" class="rwdp-btn rwdp-btn--primary rwdp-btn--sm rwdp-contact-trigger" data-dealer-id="' + dealer.id + '" data-dealer-name="' + escHtml(dealer.title) + '">' + rwdpMap.contactText + '</button>';
+        html += '<button type="button" class="rwdp-btn rwdp-btn--primary rwdp-btn--sm rwdp-contact-trigger" data-dealer-id="' + dealer.id + '" data-dealer-name="' + escHtml(dealer.title) + '">' + show.contact_text + '</button>';
       }
 
     html += '</div>';
@@ -164,7 +166,11 @@ var rwdpInitMap; // exposed globally for Google Maps callback
       directions : $el.data('show-directions')  !== 0 && $el.data('show-directions')  !== '0',
       contact    : $el.data('show-contact')     !== 0 && $el.data('show-contact')     !== '0',
       more_info  : $el.data('show-more-info')   !== 0 && $el.data('show-more-info')   !== '0',
-      view_on_map: $el.data('show-view-on-map') !== 0 && $el.data('show-view-on-map') !== '0',
+      view_on_map      : $el.data('show-view-on-map') !== 0 && $el.data('show-view-on-map') !== '0',
+      contact_text     : $el.data('contact-text')     || rwdpMap.contactText    || 'Contact This Dealer',
+      more_info_text   : $el.data('more-info-text')   || rwdpMap.moreInfoText   || 'More Info',
+      directions_text  : $el.data('directions-text')  || rwdpMap.directionsText || 'Get Directions',
+      view_on_map_text : $el.data('view-on-map-text') || rwdpMap.viewOnMapText  || 'View on Map',
     };
   }
 
@@ -179,6 +185,7 @@ var rwdpInitMap; // exposed globally for Google Maps callback
 
     var t = getListToggles();
     var dirIconHtml = $('#rwdp-results-list').attr('data-directions-icon') || '';
+    var dirIconPos  = $('#rwdp-results-list').attr('data-directions-icon-position') || 'after';
     var $grid = $('<div class="rwdp-results-grid">');
 
     dealers.forEach(function (dealer) {
@@ -188,8 +195,8 @@ var rwdpInitMap; // exposed globally for Google Maps callback
       if (t.view_on_map) {
         card += '<button type="button" class="rwdp-result-card__view-on-map rwdp-vom-btn"'
              +  ' data-dealer-id="' + dealer.id + '"'
-             +  ' aria-label="' + escAttr(rwdpMap.viewOnMapText || 'View on Map') + '">'  
-             +  escHtml(rwdpMap.viewOnMapText || 'View on Map')
+             +  ' aria-label="' + escAttr(t.view_on_map_text) + '">'
+             +  escHtml(t.view_on_map_text)
              + '</button>';
       }
 
@@ -223,12 +230,14 @@ var rwdpInitMap; // exposed globally for Google Maps callback
           card += '<div class="rwdp-result-card__address-row">';
           card += '<div class="rwdp-result-card__address">' + addrParts.map(escHtml).join('<br>') + '</div>';
           if (t.directions) {
-            var dirQuery = [dealer.address, dealer.city, dealer.state, dealer.zip].filter(Boolean).join(', ');
+            var dirQuery   = [dealer.address, dealer.city, dealer.state, dealer.zip].filter(Boolean).join(', ');
+            var dirContent = dirIconPos === 'before'
+                ? dirIconHtml + escHtml(t.directions_text)
+                : escHtml(t.directions_text) + dirIconHtml;
             card += '<a href="https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(dirQuery) + '"'
                  +   ' target="_blank" rel="noopener noreferrer"'
                  +   ' class="rwdp-result-card__directions">'
-                 +   escHtml(rwdpMap.directionsText || 'Get Directions')
-                 +   dirIconHtml
+                 +   dirContent
                  + '</a>';
           }
           card += '</div>';
@@ -256,13 +265,13 @@ var rwdpInitMap; // exposed globally for Google Maps callback
           card += '<button type="button" class="rwdp-result-card__contact rwdp-contact-btn"'
                +  ' data-dealer-id="' + dealer.id + '"'
                +  ' data-dealer-name="' + escAttr(dealer.title) + '">'
-               +  escHtml(rwdpMap.contactText || 'Contact This Dealer')
+               +  escHtml(t.contact_text)
                + '</button>';
         }
         if (hasMoreInfo) {
           card += '<a href="' + escAttr(dealer.permalink) + '"'
                +  ' class="rwdp-result-card__more-info">'
-               +  escHtml(rwdpMap.moreInfoText || 'More Info')
+               +  escHtml(t.more_info_text)
                + '</a>';
         }
         card += '</div>';
@@ -347,6 +356,10 @@ var rwdpInitMap; // exposed globally for Google Maps callback
     if (matchMarker) {
       map.panTo(matchMarker.getPosition());
       if (dealer) openInfoWindow(matchMarker, dealer);
+    }
+    var $map = $('#rwdp-map');
+    if ($map.length) {
+      $('html, body').animate({ scrollTop: $map.offset().top }, 400);
     }
   });
   $(document).on('click', '#rwdp-modal-close, #rwdp-modal-overlay', function () {

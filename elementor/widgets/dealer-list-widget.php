@@ -47,6 +47,25 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 			'default' => __( 'Enter your zip code or city to find dealers near you.', 'rw-dealer-portal' ),
 		] );
 
+		$this->add_control( 'contact_text', [
+			'label'   => __( 'Contact Button Text (card)', 'rw-dealer-portal' ),
+			'type'    => \Elementor\Controls_Manager::TEXT,
+			'default' => __( 'Contact This Dealer', 'rw-dealer-portal' ),
+		] );
+
+		$this->add_control( 'more_info_text', [
+			'label'   => __( 'More Info Button Text', 'rw-dealer-portal' ),
+			'type'    => \Elementor\Controls_Manager::TEXT,
+			'default' => __( 'More Info', 'rw-dealer-portal' ),
+		] );
+
+		$this->add_control( 'view_on_map_text', [
+			'label'     => __( 'View on Map Text', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::TEXT,
+			'default'   => __( 'View on Map', 'rw-dealer-portal' ),
+			'condition' => [ 'show_view_on_map' => 'yes' ],
+		] );
+
 		$this->end_controls_section();
 
 		// ── Content: Card Toggles ─────────────────────────────────────────
@@ -75,6 +94,38 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 				'default'      => 'yes',
 			] );
 		}
+
+		$this->end_controls_section();
+
+		// ── Content: Directions Button ────────────────────────────────────
+		$this->start_controls_section( 'section_directions_btn', [
+			'label' => __( 'Directions Button', 'rw-dealer-portal' ),
+		] );
+
+		$this->add_control( 'directions_text', [
+			'label'   => __( 'Button Text', 'rw-dealer-portal' ),
+			'type'    => \Elementor\Controls_Manager::TEXT,
+			'default' => __( 'Get Directions', 'rw-dealer-portal' ),
+		] );
+
+		$this->add_control( 'directions_icon', [
+			'label'       => __( 'Icon', 'rw-dealer-portal' ),
+			'type'        => \Elementor\Controls_Manager::ICONS,
+			'skin'        => 'inline',
+			'label_block' => false,
+			'default'     => [ 'value' => '', 'library' => '' ],
+		] );
+
+		$this->add_control( 'directions_icon_position', [
+			'label'     => __( 'Icon Position', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::SELECT,
+			'default'   => 'after',
+			'options'   => [
+				'before' => __( 'Before Text', 'rw-dealer-portal' ),
+				'after'  => __( 'After Text', 'rw-dealer-portal' ),
+			],
+			'condition' => [ 'directions_icon[value]!' => '' ],
+		] );
 
 		$this->end_controls_section();
 
@@ -402,15 +453,6 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 			'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
 		] );
 
-		$this->add_control( 'directions_icon', [
-			'label'       => __( 'Icon', 'rw-dealer-portal' ),
-			'type'        => \Elementor\Controls_Manager::ICONS,
-			'skin'        => 'inline',
-			'label_block' => false,
-			'default'     => [ 'value' => '', 'library' => '' ],
-			'description' => __( 'Displayed to the right of the button text.', 'rw-dealer-portal' ),
-		] );
-
 		$this->add_control( 'directions_icon_size', [
 			'label'      => __( 'Icon Size', 'rw-dealer-portal' ),
 			'type'       => \Elementor\Controls_Manager::SLIDER,
@@ -631,6 +673,94 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 		] );
 
 		$this->end_controls_section();
+
+		// ── Style: Contact Modal ───────────────────────────────────────────
+		$this->start_controls_section( 'style_contact_modal', [
+			'label' => __( 'Contact Modal', 'rw-dealer-portal' ),
+			'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
+		] );
+
+		$this->add_control( 'modal_heading_container', [
+			'label'     => __( 'Container', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::HEADING,
+		] );
+
+		$this->add_control( 'modal_bg', [
+			'label'     => __( 'Background', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [ '{{WRAPPER}} .rwdp-modal__content' => 'background-color: {{VALUE}};' ],
+		] );
+		$this->add_control( 'modal_padding', [
+			'label'      => __( 'Padding', 'rw-dealer-portal' ),
+			'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+			'size_units' => [ 'px', 'em', '%' ],
+			'selectors'  => [ '{{WRAPPER}} .rwdp-modal__content' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ],
+		] );
+		$this->add_control( 'modal_border_radius', [
+			'label'      => __( 'Border Radius', 'rw-dealer-portal' ),
+			'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+			'size_units' => [ 'px', '%' ],
+			'selectors'  => [ '{{WRAPPER}} .rwdp-modal__content' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ],
+		] );
+
+		$this->add_control( 'modal_heading_title', [
+			'label'     => __( 'Title', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::HEADING,
+			'separator' => 'before',
+		] );
+
+		$this->add_group_control( \Elementor\Group_Control_Typography::get_type(), [
+			'name'     => 'modal_title_typography',
+			'selector' => '{{WRAPPER}} .rwdp-modal__title',
+		] );
+		$this->add_control( 'modal_title_color', [
+			'label'     => __( 'Color', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [ '{{WRAPPER}} .rwdp-modal__title' => 'color: {{VALUE}};' ],
+		] );
+
+		$this->add_control( 'modal_heading_close', [
+			'label'     => __( 'Close Button', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::HEADING,
+			'separator' => 'before',
+		] );
+
+		$this->add_control( 'modal_close_size', [
+			'label'      => __( 'Icon Size', 'rw-dealer-portal' ),
+			'type'       => \Elementor\Controls_Manager::SLIDER,
+			'size_units' => [ 'px', 'em', 'rem' ],
+			'range'      => [ 'px' => [ 'min' => 12, 'max' => 64 ] ],
+			'selectors'  => [ '{{WRAPPER}} .rwdp-modal__close' => 'font-size: {{SIZE}}{{UNIT}};' ],
+		] );
+
+		$this->start_controls_tabs( 'modal_close_tabs' );
+		$this->start_controls_tab( 'modal_close_normal', [ 'label' => __( 'Normal', 'rw-dealer-portal' ) ] );
+		$this->add_control( 'modal_close_color', [
+			'label'     => __( 'Color', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [ '{{WRAPPER}} .rwdp-modal__close' => 'color: {{VALUE}};' ],
+		] );
+		$this->add_control( 'modal_close_bg', [
+			'label'     => __( 'Background', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [ '{{WRAPPER}} .rwdp-modal__close' => 'background-color: {{VALUE}};' ],
+		] );
+		$this->end_controls_tab();
+		$this->start_controls_tab( 'modal_close_hover', [ 'label' => __( 'Hover', 'rw-dealer-portal' ) ] );
+		$this->add_control( 'modal_close_color_hover', [
+			'label'     => __( 'Color', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [ '{{WRAPPER}} .rwdp-modal__close:hover' => 'color: {{VALUE}};' ],
+		] );
+		$this->add_control( 'modal_close_bg_hover', [
+			'label'     => __( 'Background', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [ '{{WRAPPER}} .rwdp-modal__close:hover' => 'background-color: {{VALUE}};' ],
+		] );
+		$this->end_controls_tab();
+		$this->end_controls_tabs();
+
+		$this->end_controls_section();
 	}
 
 	// -----------------------------------------------------------------------
@@ -662,7 +792,7 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 			echo '<div class="rwdp-result-card">';
 
 			if ( $show_view_on_map ) {
-				echo '<button type="button" class="rwdp-result-card__view-on-map">' . esc_html__( 'View on Map', 'rw-dealer-portal' ) . '</button>';
+				echo '<button type="button" class="rwdp-result-card__view-on-map">' . esc_html( $s['view_on_map_text'] ?? __( 'View on Map', 'rw-dealer-portal' ) ) . '</button>';
 			}
 
 			if ( $show_thumbnail ) {
@@ -684,12 +814,15 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 				echo '<div class="rwdp-result-card__address">' . esc_html( $dealer['address'] ) . '<br>' . esc_html( $dealer['city'] ) . ', ' . esc_html( $dealer['state'] ) . ' ' . esc_html( $dealer['zip'] ) . '</div>';
 				if ( $show_directions ) {
 					$icon_html = '';
+					$icon_pos  = $s['directions_icon_position'] ?? 'after';
+					$dir_text  = esc_html( $s['directions_text'] ?? __( 'Get Directions', 'rw-dealer-portal' ) );
 					if ( ! empty( $s['directions_icon']['value'] ) ) {
 						ob_start();
 						\Elementor\Icons_Manager::render_icon( $s['directions_icon'], [ 'aria-hidden' => 'true' ] );
 						$icon_html = ob_get_clean();
 					}
-					echo '<span class="rwdp-result-card__directions">' . esc_html__( 'Get Directions', 'rw-dealer-portal' ) . $icon_html . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput -- icon_html from Elementor
+					$dir_inner = $icon_pos === 'before' ? $icon_html . $dir_text : $dir_text . $icon_html;
+					echo '<span class="rwdp-result-card__directions">' . $dir_inner . '</span>'; // phpcs:ignore WordPress.Security.EscapeOutput -- icon_html from Elementor, dir_text escaped above
 				}
 				echo '</div>';
 			}
@@ -705,10 +838,10 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 			if ( $show_contact || $show_more_info ) {
 				echo '<div class="rwdp-result-card__actions">';
 				if ( $show_contact ) {
-					echo '<span class="rwdp-result-card__contact">' . esc_html__( 'Contact This Dealer', 'rw-dealer-portal' ) . '</span>';
+					echo '<span class="rwdp-result-card__contact">' . esc_html( $s['contact_text'] ?? __( 'Contact This Dealer', 'rw-dealer-portal' ) ) . '</span>';
 				}
 				if ( $show_more_info ) {
-					echo '<a href="#" class="rwdp-result-card__more-info">' . esc_html__( 'More Info', 'rw-dealer-portal' ) . '</a>';
+					echo '<a href="#" class="rwdp-result-card__more-info">' . esc_html( $s['more_info_text'] ?? __( 'More Info', 'rw-dealer-portal' ) ) . '</a>';
 				}
 				echo '</div>';
 			}
@@ -744,17 +877,22 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 		}
 
 		$data_attrs = implode( ' ', [
-			'data-show-thumbnail="'   . esc_attr( $bool( $s['show_thumbnail']   ?? 'yes' ) ) . '"',
-			'data-show-logo="'        . esc_attr( $bool( $s['show_logo']        ?? 'yes' ) ) . '"',
-			'data-show-title="'       . esc_attr( $bool( $s['show_title']       ?? 'yes' ) ) . '"',
-			'data-show-address="'     . esc_attr( $bool( $s['show_address']     ?? 'yes' ) ) . '"',
-			'data-show-phone="'       . esc_attr( $bool( $s['show_phone']       ?? 'yes' ) ) . '"',
-			'data-show-hours="'       . esc_attr( $bool( $s['show_hours']       ?? 'yes' ) ) . '"',
-			'data-show-directions="'  . esc_attr( $bool( $s['show_directions']  ?? 'yes' ) ) . '"',
-			'data-show-contact="'     . esc_attr( $bool( $s['show_contact']     ?? 'yes' ) ) . '"',
-			'data-show-more-info="'   . esc_attr( $bool( $s['show_more_info']   ?? 'yes' ) ) . '"',
-			'data-show-view-on-map="' . esc_attr( $bool( $s['show_view_on_map'] ?? 'yes' ) ) . '"',
-			'data-directions-icon="'  . esc_attr( $dir_icon_html ) . '"',
+			'data-show-thumbnail="'           . esc_attr( $bool( $s['show_thumbnail']   ?? 'yes' ) ) . '"',
+			'data-show-logo="'                . esc_attr( $bool( $s['show_logo']        ?? 'yes' ) ) . '"',
+			'data-show-title="'               . esc_attr( $bool( $s['show_title']       ?? 'yes' ) ) . '"',
+			'data-show-address="'             . esc_attr( $bool( $s['show_address']     ?? 'yes' ) ) . '"',
+			'data-show-phone="'               . esc_attr( $bool( $s['show_phone']       ?? 'yes' ) ) . '"',
+			'data-show-hours="'               . esc_attr( $bool( $s['show_hours']       ?? 'yes' ) ) . '"',
+			'data-show-directions="'          . esc_attr( $bool( $s['show_directions']  ?? 'yes' ) ) . '"',
+			'data-show-contact="'             . esc_attr( $bool( $s['show_contact']     ?? 'yes' ) ) . '"',
+			'data-show-more-info="'           . esc_attr( $bool( $s['show_more_info']   ?? 'yes' ) ) . '"',
+			'data-show-view-on-map="'         . esc_attr( $bool( $s['show_view_on_map'] ?? 'yes' ) ) . '"',
+			'data-directions-icon="'          . esc_attr( $dir_icon_html ) . '"',
+			'data-directions-icon-position="' . esc_attr( $s['directions_icon_position'] ?? 'after' ) . '"',
+			'data-directions-text="'          . esc_attr( $s['directions_text']  ?? __( 'Get Directions',    'rw-dealer-portal' ) ) . '"',
+			'data-contact-text="'             . esc_attr( $s['contact_text']     ?? __( 'Contact This Dealer', 'rw-dealer-portal' ) ) . '"',
+			'data-more-info-text="'           . esc_attr( $s['more_info_text']   ?? __( 'More Info',          'rw-dealer-portal' ) ) . '"',
+			'data-view-on-map-text="'         . esc_attr( $s['view_on_map_text'] ?? __( 'View on Map',        'rw-dealer-portal' ) ) . '"',
 		] );
 		?>
 		<div class="rwdp-finder__results" id="rwdp-results-list" <?php echo $data_attrs; // phpcs:ignore WordPress.Security.EscapeOutput -- attrs escaped above ?>>
