@@ -28,6 +28,6 @@ class RWDP_Dashboard_Widget extends \Elementor\Widget_Base {
 	}
 
 	protected function render() {
-		echo rwdp_dashboard_shortcode( $this->get_settings_for_display() );
+		echo rwdp_dashboard_shortcode( $this->get_settings_for_display() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- output escaping handled within the shortcode function
 	}
 }

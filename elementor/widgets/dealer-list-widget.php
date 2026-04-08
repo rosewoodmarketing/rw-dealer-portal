@@ -760,6 +760,24 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 		$this->end_controls_tab();
 		$this->end_controls_tabs();
 
+		$this->add_group_control( \Elementor\Group_Control_Border::get_type(), [
+			'name'      => 'modal_close_border',
+			'selector'  => '{{WRAPPER}} .rwdp-modal__close',
+			'separator' => 'before',
+		] );
+		$this->add_control( 'modal_close_border_radius', [
+			'label'      => __( 'Border Radius', 'rw-dealer-portal' ),
+			'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+			'size_units' => [ 'px', '%' ],
+			'selectors'  => [ '{{WRAPPER}} .rwdp-modal__close' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ],
+		] );
+		$this->add_control( 'modal_close_padding', [
+			'label'      => __( 'Padding', 'rw-dealer-portal' ),
+			'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+			'size_units' => [ 'px', 'em' ],
+			'selectors'  => [ '{{WRAPPER}} .rwdp-modal__close' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ],
+		] );
+
 		$this->end_controls_section();
 	}
 

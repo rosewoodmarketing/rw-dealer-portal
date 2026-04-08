@@ -13,6 +13,10 @@ function rwdp_register_dealer_finder_assets() {
 	wp_register_style( 'rwdp-dealer-map', RWDP_PLUGIN_URL . 'assets/css/dealer-map.css', [], RWDP_VERSION );
 
 	wp_register_script( 'rwdp-dealer-map', RWDP_PLUGIN_URL . 'assets/js/dealer-map.js', [ 'jquery' ], RWDP_VERSION, true );
+
+	// Localize at registration time — wp_localize_script only outputs data if the
+	// script is actually enqueued, so this is safe and covers both the shortcode
+	// and Elementor widget paths.
 	wp_localize_script( 'rwdp-dealer-map', 'rwdpMap', [
 		'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
 		'nonce'          => wp_create_nonce( 'rwdp_dealer_finder' ),
@@ -165,7 +169,7 @@ function rwdp_ajax_get_dealers() {
 
 	// If a locked type slug was sent from the shortcode, resolve it server-side
 	// (try slug first, fall back to term name).
-	$locked_type_slug = sanitize_text_field( $_POST['locked_type'] ?? '' );
+	$locked_type_slug = sanitize_text_field( wp_unslash( $_POST['locked_type'] ?? '' ) );
 	if ( $locked_type_slug ) {
 		$locked_term = get_term_by( 'slug', $locked_type_slug, 'rw_dealer_type' );
 		if ( ! $locked_term || is_wp_error( $locked_term ) ) {

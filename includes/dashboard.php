@@ -35,7 +35,9 @@ function rwdp_dashboard_shortcode() {
 	?>
 	<div class="rwdp-portal rwdp-dashboard">
 		<div class="rwdp-dashboard-header">
-			<h2><?php printf( esc_html__( 'Welcome back, %s', 'rw-dealer-portal' ), esc_html( $user->first_name ?: $user->display_name ) ); ?></h2>
+			<h2><?php
+			/* translators: %s is the user's first name or display name */
+			printf( esc_html__( 'Welcome back, %s', 'rw-dealer-portal' ), esc_html( $user->first_name ?: $user->display_name ) ); ?></h2>
 		</div>
 
 		<div class="rwdp-dashboard-nav">
@@ -49,8 +51,7 @@ function rwdp_dashboard_shortcode() {
 				<span class="dashicons dashicons-email-alt"></span>
 				<span class="rwdp-nav-card__title"><?php esc_html_e( 'Contact Requests', 'rw-dealer-portal' ); ?></span>
 				<span class="rwdp-nav-card__desc">
-					<?php if ( $pending_count ) {
-						printf( esc_html__( '%d request(s) received', 'rw-dealer-portal' ), absint( $pending_count ) );
+					<?php if ( $pending_count ) {					/* translators: %d is the number of pending contact requests */						printf( esc_html__( '%d request(s) received', 'rw-dealer-portal' ), absint( $pending_count ) );
 					} else {
 						esc_html_e( 'View contact form submissions', 'rw-dealer-portal' );
 					} ?>

@@ -25,15 +25,16 @@ final class RWDP_Elementor_Manager {
 
 	public static function register_widgets( $widgets_manager ) {
 		$widget_files = [
-			'login-form-widget',
-			'dashboard-widget',
-			'my-account-widget',
-			'edit-dealer-widget',
-			'my-requests-widget',
-			'assets-widget',
 			'dealer-search-widget',
 			'dealer-map-widget',
 			'dealer-list-widget',
+			// Not yet built out — uncomment when controls are implemented:
+			// 'dashboard-widget',
+			// 'my-account-widget',
+			// 'my-requests-widget',
+			// 'login-form-widget',
+			// 'edit-dealer-widget',
+			// 'assets-widget',
 		];
 
 		foreach ( $widget_files as $file ) {
@@ -41,15 +42,15 @@ final class RWDP_Elementor_Manager {
 		}
 
 		$widget_classes = [
-			'RWDP_Login_Form_Widget',
-			'RWDP_Dashboard_Widget',
-			'RWDP_My_Account_Widget',
-			'RWDP_Edit_Dealer_Widget',
-			'RWDP_My_Requests_Widget',
-			'RWDP_Assets_Widget',
 			'RWDP_Dealer_Search_Widget',
 			'RWDP_Dealer_Map_Widget',
 			'RWDP_Dealer_List_Widget',
+			// 'RWDP_Dashboard_Widget',
+			// 'RWDP_My_Account_Widget',
+			// 'RWDP_My_Requests_Widget',
+			// 'RWDP_Login_Form_Widget',
+			// 'RWDP_Edit_Dealer_Widget',
+			// 'RWDP_Assets_Widget',
 		];
 
 		foreach ( $widget_classes as $class ) {

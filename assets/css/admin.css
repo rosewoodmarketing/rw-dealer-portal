@@ -50,25 +50,77 @@
   margin-right: 4px;
 }
 
-/* ---- Settings page ---- */
-.rwdp-settings-section td label {
+/* ---- Settings tabbed layout ---- */
+.rwdp-settings-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.rwdp-settings-nav {
+  flex: 0 0 190px;
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.rwdp-settings-nav__item {
   display: block;
-  margin-bottom: 4px;
+  padding: 11px 16px;
+  font-size: 13px;
+  color: #50575e;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid #f0f0f1;
+  line-height: 1.4;
+  transition: background 0.1s;
+}
+
+.rwdp-settings-nav__item:last-child {
+  border-bottom: none;
+}
+
+.rwdp-settings-nav__item:hover {
+  background: #f6f7f7;
+  color: #1d2327;
+}
+
+.rwdp-settings-nav__item--active {
+  background: #f6f7f7;
+  border-left-color: #2271b1;
+  color: #2271b1;
   font-weight: 600;
 }
 
+.rwdp-settings-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.rwdp-settings-content .form-table th {
+  width: 220px;
+}
+
 .rwdp-restricted-pages-list {
-  max-height: 250px;
+  max-height: 260px;
   overflow-y: auto;
   border: 1px solid #c3c4c7;
   padding: 8px 12px;
   background: #fff;
   border-radius: 3px;
+  display: flex;
+  flex-direction: column;
 }
 
 .rwdp-restricted-pages-list label {
-  display: block;
-  margin-bottom: 6px;
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 8px;
+  white-space: nowrap;
 }
 
 /* ---- Geocoding status box ---- */

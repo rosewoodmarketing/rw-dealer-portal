@@ -197,7 +197,7 @@ function rwdp_save_dealer_meta( $post_id, $post ) {
 		if ( $meta_key === '_rwdp_hours' ) {
 			$value = sanitize_textarea_field( wp_unslash( $_POST[ $post_key ] ?? '' ) );
 		} elseif ( $meta_key === '_rwdp_public_email' ) {
-			$value = sanitize_email( $_POST[ $post_key ] ?? '' );
+			$value = sanitize_email( wp_unslash( $_POST[ $post_key ] ?? '' ) );
 		} elseif ( $meta_key === '_rwdp_website' ) {
 			$value = esc_url_raw( wp_unslash( $_POST[ $post_key ] ?? '' ) );
 		} else {

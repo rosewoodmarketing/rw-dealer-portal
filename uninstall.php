@@ -19,7 +19,6 @@ if ( $admin ) {
 delete_option( 'rwdp_settings' );
 delete_option( 'rwdp_page_ids' );
 delete_option( 'rwdp_dealer_types_seeded' );
-delete_option( 'rwdp_asset_categories_seeded' );
 delete_transient( 'rwdp_github_updater' );
 
 // Remove user meta for all users

@@ -28,6 +28,6 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 	}
 
 	protected function render() {
-		echo rwdp_login_form_shortcode( $this->get_settings_for_display() );
+		echo rwdp_login_form_shortcode( $this->get_settings_for_display() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- output escaping handled within the shortcode function
 	}
 }

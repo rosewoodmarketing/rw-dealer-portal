@@ -196,7 +196,7 @@ function rwdp_login_form_shortcode() {
 	ob_start();
 	?>
 	<div class="rwdp-auth-wrap">
-		<?php echo $message; // already escaped above ?>
+		<?php echo $message; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $message is built exclusively with esc_html__() literals above ?>
 
 		<div class="rwdp-auth-tabs">
 			<a href="<?php echo esc_url( $login_url ); ?>" class="rwdp-auth-tab <?php echo $active_tab === 'login' ? 'rwdp-auth-tab--active' : ''; ?>">

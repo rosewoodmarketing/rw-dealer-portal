@@ -2,11 +2,13 @@
 /**
  * Plugin Name: RW Dealer Portal
  * Description: A dealer portal for businesses that operate with a dealer network. Dealers log in to access digital assets. A public-facing Dealer Finder lets visitors search and contact dealers.
- * Version: 1.0.6
+ * Version: 1.0.7
  * Author: Rosewood Marketing
  * Plugin URI: https://github.com/rosewoodmarketing/rw-dealer-portal
- * Requires at least: 6.0
- * Requires PHP: 7.4
+ * Requires at least: 6.5
+ * Requires PHP: 8.1
+ * License: GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * steps for auto-update:
  * 1. Update header Version: and RWDP_VERSION to new version number
  * 2. Commit and push changes to GitHub
@@ -15,7 +17,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'RWDP_VERSION',    '1.0.6' );
+define( 'RWDP_VERSION',    '1.0.7' );
 define( 'RWDP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'RWDP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 

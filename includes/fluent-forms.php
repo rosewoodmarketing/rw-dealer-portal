@@ -105,7 +105,8 @@ function rwdp_send_submission_cc( $dealer_id, $data ) {
 	}
 
 	$dealer_name = get_the_title( $dealer_id );
-	$subject     = sprintf( __( '[%s] New contact request from %s', 'rw-dealer-portal' ), get_bloginfo( 'name' ), $data['name'] ?: __( 'a visitor', 'rw-dealer-portal' ) );
+	/* translators: 1: site name, 2: visitor's name */
+	$subject     = sprintf( __( '[%1$s] New contact request from %2$s', 'rw-dealer-portal' ), get_bloginfo( 'name' ), $data['name'] ?: __( 'a visitor', 'rw-dealer-portal' ) );
 
 	$body  = sprintf( "Dealer: %s\n\n", $dealer_name );
 	$body .= sprintf( "Name:    %s\n", $data['name'] );

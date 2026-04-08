@@ -21,7 +21,7 @@ function rwdp_register_taxonomies() {
 		'hierarchical'      => true,
 		'public'            => true,
 		'show_ui'           => true,
-		'show_in_menu'      => true,
+		'show_in_menu'      => false,
 		'show_in_rest'      => true,
 		'show_admin_column' => true,
 		'rewrite'           => [ 'slug' => 'dealer-type', 'with_front' => false ],
@@ -38,36 +38,4 @@ function rwdp_register_taxonomies() {
 		update_option( 'rwdp_dealer_types_seeded', true );
 	}
 
-	// ── Asset Category ──────────────────────────────────────────────────────
-	register_taxonomy( 'rw_asset_category', 'rw_asset', [
-		'labels' => [
-			'name'              => __( 'Asset Categories', 'rw-dealer-portal' ),
-			'singular_name'     => __( 'Asset Category', 'rw-dealer-portal' ),
-			'search_items'      => __( 'Search Asset Categories', 'rw-dealer-portal' ),
-			'all_items'         => __( 'All Asset Categories', 'rw-dealer-portal' ),
-			'edit_item'         => __( 'Edit Asset Category', 'rw-dealer-portal' ),
-			'update_item'       => __( 'Update Asset Category', 'rw-dealer-portal' ),
-			'add_new_item'      => __( 'Add New Asset Category', 'rw-dealer-portal' ),
-			'new_item_name'     => __( 'New Asset Category Name', 'rw-dealer-portal' ),
-			'menu_name'         => __( 'Categories', 'rw-dealer-portal' ),
-		],
-		'hierarchical'      => true,
-		'public'            => false,
-		'show_ui'           => true,
-		'show_in_menu'      => true,
-		'show_in_rest'      => true,
-		'show_admin_column' => true,
-		'rewrite'           => false,
-	] );
-
-	// Seed default asset category terms on first run
-	if ( ! get_option( 'rwdp_asset_categories_seeded' ) ) {
-		$defaults = [ 'Photos', 'PDF Catalogs', 'Videos', 'Logos', 'Brand Manuals' ];
-		foreach ( $defaults as $term ) {
-			if ( ! term_exists( $term, 'rw_asset_category' ) ) {
-				wp_insert_term( $term, 'rw_asset_category' );
-			}
-		}
-		update_option( 'rwdp_asset_categories_seeded', true );
-	}
 }

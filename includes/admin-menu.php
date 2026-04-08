@@ -41,15 +41,6 @@ function rwdp_register_admin_menu() {
 		'edit.php?post_type=rw_dealer'
 	);
 
-	// Add New Dealer
-	add_submenu_page(
-		'rw-dealer-portal',
-		__( 'Add New Dealer', 'rw-dealer-portal' ),
-		__( 'Add New Dealer', 'rw-dealer-portal' ),
-		'edit_rw_dealers',
-		'post-new.php?post_type=rw_dealer'
-	);
-
 	// Assets CPT
 	add_submenu_page(
 		'rw-dealer-portal',
@@ -57,15 +48,6 @@ function rwdp_register_admin_menu() {
 		__( 'Assets', 'rw-dealer-portal' ),
 		'edit_rw_assets',
 		'edit.php?post_type=rw_asset'
-	);
-
-	// Add New Asset
-	add_submenu_page(
-		'rw-dealer-portal',
-		__( 'Add New Asset', 'rw-dealer-portal' ),
-		__( 'Add New Asset', 'rw-dealer-portal' ),
-		'edit_rw_assets',
-		'post-new.php?post_type=rw_asset'
 	);
 
 	// Contact Submissions
@@ -97,6 +79,36 @@ function rwdp_register_admin_menu() {
 		'rwdp-settings',
 		'rwdp_admin_settings_page'
 	);
+
+	// Dealer Types taxonomy
+	add_submenu_page(
+		'rw-dealer-portal',
+		__( 'Dealer Types', 'rw-dealer-portal' ),
+		__( 'Dealer Types', 'rw-dealer-portal' ),
+		'manage_rwdp_portal',
+		'edit-tags.php?taxonomy=rw_dealer_type&post_type=rw_dealer'
+	);
+}
+
+/**
+ * Keep "Dealer Portal" highlighted in the admin sidebar when managing Dealer Types.
+ */
+add_filter( 'parent_file', 'rwdp_dealer_types_parent_file' );
+function rwdp_dealer_types_parent_file( $parent_file ) {
+	$screen = get_current_screen();
+	if ( $screen && 'rw_dealer_type' === $screen->taxonomy ) {
+		$parent_file = 'rw-dealer-portal';
+	}
+	return $parent_file;
+}
+
+add_filter( 'submenu_file', 'rwdp_dealer_types_submenu_file' );
+function rwdp_dealer_types_submenu_file( $submenu_file ) {
+	$screen = get_current_screen();
+	if ( $screen && 'rw_dealer_type' === $screen->taxonomy ) {
+		$submenu_file = 'edit-tags.php?taxonomy=rw_dealer_type&post_type=rw_dealer';
+	}
+	return $submenu_file;
 }
 
 /**

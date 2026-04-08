@@ -101,7 +101,15 @@ while ( have_posts() ) :
 					<?php endif; ?>
 				</div>
 
-				<?php if ( $lat && $lng && $maps_key ) : ?>
+				<?php if ( $lat && $lng && $maps_key ) :
+				wp_enqueue_script(
+					'rwdp-single-dealer-map',
+					'https://maps.googleapis.com/maps/api/js?key=' . rawurlencode( $maps_key ) . '&callback=rwdpInitSingleMap',
+					[],
+					null,
+					true
+				);
+				?>
 				<div class="rwdp-dealer-single__map">
 					<div id="rwdp-single-map" style="width:100%;height:320px;border-radius:6px;"></div>
 				</div>
@@ -114,7 +122,6 @@ while ( have_posts() ) :
 					new google.maps.Marker({ position: latLng, map: map, title: <?php echo wp_json_encode( get_the_title() ); ?> });
 				}
 				</script>
-				<script src="https://maps.googleapis.com/maps/api/js?key=<?php echo rawurlencode( $maps_key ); ?>&callback=rwdpInitSingleMap" async defer></script>
 				<?php endif; ?>
 
 			</div>

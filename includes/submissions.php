@@ -1,6 +1,22 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+// Fire CSV export on admin_init before any HTML output is sent.
+add_action( 'admin_init', 'rwdp_maybe_export_submissions_csv' );
+function rwdp_maybe_export_submissions_csv() {
+	if ( ! isset( $_GET['rwdp_export_csv'] ) ) {
+		return;
+	}
+	if ( ! current_user_can( 'view_rwdp_submissions' ) ) {
+		return;
+	}
+	if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ?? '' ) ), 'rwdp_export_submissions' ) ) {
+		return;
+	}
+	rwdp_export_submissions_csv();
+	exit;
+}
+
 add_shortcode( 'rwdp_my_requests', 'rwdp_my_requests_shortcode' );
 
 function rwdp_my_requests_shortcode() {
@@ -125,12 +141,6 @@ function rwdp_my_requests_shortcode() {
 function rwdp_admin_submissions_page() {
 	if ( ! current_user_can( 'view_rwdp_submissions' ) ) {
 		wp_die( esc_html__( 'Sorry, you do not have permission to access this page.', 'rw-dealer-portal' ) );
-	}
-
-	// Handle CSV export
-	if ( isset( $_GET['rwdp_export_csv'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ?? '' ) ), 'rwdp_export_submissions' ) ) {
-		rwdp_export_submissions_csv();
-		exit;
 	}
 
 	$settings      = get_option( 'rwdp_settings', [] );
@@ -260,14 +270,14 @@ function rwdp_admin_submissions_page() {
 			<div class="tablenav bottom">
 				<div class="tablenav-pages">
 					<?php
-					echo paginate_links( [
+					echo wp_kses_post( paginate_links( [
 						'base'      => add_query_arg( 'paged', '%#%' ),
 						'format'    => '',
 						'current'   => $paged,
 						'total'     => $total_pages,
 						'prev_text' => '&laquo;',
 						'next_text' => '&raquo;',
-					] );
+					] ) ?? '' );
 					?>
 				</div>
 			</div>
@@ -321,7 +331,7 @@ function rwdp_export_submissions_csv() {
 	}
 
 	header( 'Content-Type: text/csv; charset=utf-8' );
-	header( 'Content-Disposition: attachment; filename="submissions-' . date( 'Y-m-d' ) . '.csv"' );
+	header( 'Content-Disposition: attachment; filename="submissions-' . gmdate( 'Y-m-d' ) . '.csv"' );
 	header( 'Cache-Control: no-cache, no-store, must-revalidate' );
 
 	$out = fopen( 'php://output', 'w' );
@@ -343,5 +353,5 @@ function rwdp_export_submissions_csv() {
 		] );
 	}
 
-	fclose( $out );
+	fclose( $out ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- WP_Filesystem does not support php://output streams
 }

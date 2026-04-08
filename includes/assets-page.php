@@ -122,15 +122,6 @@ function rwdp_assets_shortcode() {
 
 	wp_enqueue_style( 'rwdp-portal', RWDP_PLUGIN_URL . 'assets/css/portal.css', [ 'dashicons' ], RWDP_VERSION );
 
-	// Get all asset categories (top-level only)
-	$categories = get_terms( [
-		'taxonomy'   => 'rw_asset_category',
-		'hide_empty' => true,
-		'parent'     => 0,
-		'orderby'    => 'name',
-		'order'      => 'ASC',
-	] );
-
 	$assets = get_posts( [
 		'post_type'      => 'rw_asset',
 		'post_status'    => 'publish',
@@ -146,43 +137,22 @@ function rwdp_assets_shortcode() {
 		<h2><?php esc_html_e( 'Digital Assets', 'rw-dealer-portal' ); ?></h2>
 		<p class="rwdp-assets__intro"><?php esc_html_e( 'Browse and download assets for your dealership.', 'rw-dealer-portal' ); ?></p>
 
-		<?php if ( ! empty( $categories ) && ! is_wp_error( $categories ) ) : ?>
-			<nav class="rwdp-assets__tabs" aria-label="<?php esc_attr_e( 'Asset categories', 'rw-dealer-portal' ); ?>">
-				<a href="#rwdp-asset-all" class="rwdp-assets__tab rwdp-assets__tab--active" data-target="all"><?php esc_html_e( 'All', 'rw-dealer-portal' ); ?></a>
-				<?php foreach ( $categories as $cat ) : ?>
-					<a href="#rwdp-asset-<?php echo absint( $cat->term_id ); ?>" class="rwdp-assets__tab" data-target="<?php echo absint( $cat->term_id ); ?>">
-						<?php echo esc_html( $cat->name ); ?>
-					</a>
-				<?php endforeach; ?>
-			</nav>
-		<?php endif; ?>
-
 		<?php if ( ! $assets ) : ?>
 			<p><?php esc_html_e( 'No assets have been added yet. Check back soon.', 'rw-dealer-portal' ); ?></p>
 		<?php else : ?>
 			<div class="rwdp-assets__grid">
 				<?php foreach ( $assets as $asset ) :
-					$terms    = get_the_terms( $asset->ID, 'rw_asset_category' );
-					$term_ids = ( $terms && ! is_wp_error( $terms ) ) ? array_map( function( $t ) { return absint( $t->term_id ); }, $terms ) : [];
-					$term_str = implode( ' ', $term_ids );
-					$thumb    = get_the_post_thumbnail( $asset->ID, 'medium' );
-					$excerpt  = get_the_excerpt( $asset );
-				?>
-					<a href="<?php echo esc_url( get_permalink( $asset->ID ) ); ?>"
-					   class="rwdp-asset-card"
-					   data-categories="all <?php echo esc_attr( $term_str ); ?>">
+				$thumb   = get_the_post_thumbnail( $asset->ID, 'medium' );
+				$excerpt = get_the_excerpt( $asset );
+			?>
+				<a href="<?php echo esc_url( get_permalink( $asset->ID ) ); ?>"
+				   class="rwdp-asset-card">
 						<?php if ( $thumb ) : ?>
-							<div class="rwdp-asset-card__thumb"><?php echo $thumb; ?></div>
+							<div class="rwdp-asset-card__thumb"><?php echo wp_kses_post( $thumb ); ?></div>
 						<?php endif; ?>
 						<div class="rwdp-asset-card__body">
 							<h3 class="rwdp-asset-card__title"><?php echo esc_html( $asset->post_title ); ?></h3>
-							<?php if ( $terms && ! is_wp_error( $terms ) ) : ?>
-								<div class="rwdp-asset-card__cats">
-									<?php foreach ( $terms as $term ) : ?>
-										<span class="rwdp-tag"><?php echo esc_html( $term->name ); ?></span>
-									<?php endforeach; ?>
-								</div>
-							<?php endif; ?>
+
 							<?php if ( $excerpt ) : ?>
 								<p class="rwdp-asset-card__excerpt"><?php echo esc_html( $excerpt ); ?></p>
 							<?php endif; ?>
@@ -239,7 +209,7 @@ function rwdp_render_gallery_sections_meta_box( $post ) {
 					<div class="rwdp-image-previews">
 						<?php foreach ( (array) ( $section['images'] ?? [] ) as $img_id ) :
 							$thumb = wp_get_attachment_image( absint( $img_id ), [ 60, 60 ] );
-							if ( $thumb ) echo $thumb;
+						if ( $thumb ) echo wp_kses_post( $thumb );
 						endforeach; ?>
 					</div>
 					<button type="button" class="button rwdp-pick-images"><?php esc_html_e( 'Add / Change Images', 'rw-dealer-portal' ); ?></button>
@@ -337,7 +307,7 @@ function rwdp_save_asset_meta( $post_id, $post ) {
 	if ( ! current_user_can( 'edit_rw_asset', $post_id ) ) return;
 
 	// Gallery sections
-	$raw_gallery = $_POST['rwdp_gallery_sections'] ?? [];
+	$raw_gallery = wp_unslash( $_POST['rwdp_gallery_sections'] ?? [] );
 	$gallery_sections = [];
 	if ( is_array( $raw_gallery ) ) {
 		foreach ( $raw_gallery as $row ) {
@@ -349,7 +319,7 @@ function rwdp_save_asset_meta( $post_id, $post ) {
 	update_post_meta( $post_id, '_rwdp_gallery_sections', $gallery_sections );
 
 	// Video sections
-	$raw_video = $_POST['rwdp_video_sections'] ?? [];
+	$raw_video = wp_unslash( $_POST['rwdp_video_sections'] ?? [] );
 	$video_sections = [];
 	if ( is_array( $raw_video ) ) {
 		foreach ( $raw_video as $row ) {
@@ -361,7 +331,7 @@ function rwdp_save_asset_meta( $post_id, $post ) {
 	update_post_meta( $post_id, '_rwdp_video_sections', $video_sections );
 
 	// Download sections
-	$raw_download = $_POST['rwdp_download_sections'] ?? [];
+	$raw_download = wp_unslash( $_POST['rwdp_download_sections'] ?? [] );
 	$download_sections = [];
 	if ( is_array( $raw_download ) ) {
 		foreach ( $raw_download as $row ) {

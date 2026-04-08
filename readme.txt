@@ -1,10 +1,10 @@
 === RW Dealer Portal ===
 Contributors: rosewoodmarketing
 Tags: dealer, dealer finder, dealer portal, dealer locator, elementor
-Requires at least: 6.0
-Tested up to: 6.8
-Requires PHP: 7.4
-Stable tag: 1.0.6
+Requires at least: 6.5
+Tested up to: 6.9
+Requires PHP: 8.1
+Stable tag: 1.0.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -62,6 +62,16 @@ Use the **Lock to Dealer Type** control on the Dealer Search Bar widget and ente
 4. Plugin settings screen (Google Maps API key, page assignments).
 
 == Changelog ==
+
+= 1.0.7 =
+* Added: Settings page redesigned with left-side tabbed navigation (Maps API Keys, Contact Form, Portal Pages, Restricted Pages).
+* Added: Dealer Types taxonomy now manageable via dedicated admin submenu — no longer requires editing a dealer to manage types.
+* Added: Removed redundant "Add New Dealer" and "Add New Asset" sidebar entries; use the "Add New" button on each list screen instead.
+* Fixed: Deprecated `preg_replace()` notice on the Submissions page when `paginate_links()` returns null (single page of results).
+* Changed: Removed unused Asset Category taxonomy and all references to it.
+* Changed: Elementor stub widgets (Dashboard, My Account, My Requests) hidden from the widget panel until fully built out.
+* Changed: `wp_localize_script` for Dealer Finder nonce correctly scoped — no longer runs on every frontend page load.
+* Changed: Plugin now requires WordPress 6.5+ and PHP 8.1+.
 
 = 1.0.6 =
 * Changed: Contact form submissions are no longer stored as a custom post type. The Fluent Forms entry is tagged with the dealer ID in FF's own submission_meta table instead.

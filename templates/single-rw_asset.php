@@ -71,16 +71,6 @@ while ( have_posts() ) :
 			<?php endif; ?>
 			<h1 class="rwdp-asset-single__title"><?php the_title(); ?></h1>
 
-			<?php
-			$terms = get_the_terms( $asset_id, 'rw_asset_category' );
-			if ( $terms && ! is_wp_error( $terms ) ) :
-			?>
-				<div class="rwdp-asset-single__cats">
-					<?php foreach ( $terms as $term ) : ?>
-						<span class="rwdp-tag"><?php echo esc_html( $term->name ); ?></span>
-					<?php endforeach; ?>
-				</div>
-			<?php endif; ?>
 		</header>
 
 		<?php if ( get_the_content() ) : ?>
@@ -97,7 +87,7 @@ while ( have_posts() ) :
 					   class="rwdp-asset-card">
 						<?php $thumb = get_the_post_thumbnail( $child->ID, 'medium' ); ?>
 						<?php if ( $thumb ) : ?>
-							<div class="rwdp-asset-card__thumb"><?php echo $thumb; ?></div>
+							<div class="rwdp-asset-card__thumb"><?php echo wp_kses_post( $thumb ); ?></div>
 						<?php endif; ?>
 						<div class="rwdp-asset-card__body">
 							<h3 class="rwdp-asset-card__title"><?php echo esc_html( $child->post_title ); ?></h3>
@@ -190,7 +180,7 @@ while ( have_posts() ) :
 					$embed = wp_oembed_get( $url );
 					if ( $embed ) :
 				?>
-					<div class="rwdp-video-embed"><?php echo $embed; ?></div>
+					<div class="rwdp-video-embed"><?php echo wp_kses_post( $embed ); ?></div>
 				<?php
 					else :
 				?>
