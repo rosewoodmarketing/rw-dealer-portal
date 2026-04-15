@@ -31,7 +31,7 @@ while ( have_posts() ) :
 	$settings     = get_option( 'rwdp_settings', [] );
 	$maps_key     = $settings['google_maps_api_key'] ?? '';
 	?>
-	<article id="post-<?php the_ID(); ?>" <?php post_class( 'rwdp-dealer-single' ); ?>>
+	<article id="post-<?php the_ID(); ?>" <?php post_class( 'rwdp-dealer-single site-main' ); ?>>
 
 		<?php if ( has_post_thumbnail() ) : ?>
 		<div class="rwdp-dealer-single__hero">

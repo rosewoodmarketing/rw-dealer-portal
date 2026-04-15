@@ -13,7 +13,6 @@ This file is for the next developer (human or AI) to quickly understand:
 ## Summary of implemented behavior
 1. The Dealer Finder type dropdown is optional via settings checkbox.
 2. Dropdown options now come from an ACF Relationship/Post Object field on rw_dealer posts.
-3. Dealer Filter Taxonomy setting was removed from the UI.
 4. Filter Source Mode now uses ACF relationship field mode.
 5. Existing frontend AJAX contract was preserved (type_id and locked_type request keys, type_ids response key).
 6. Dealer Finder settings show a warning when relationship mode is misconfigured.
