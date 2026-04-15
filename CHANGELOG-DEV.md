@@ -20,6 +20,7 @@ This file is for the next developer (human or AI) to quickly understand:
 8. Dealer Finder settings now include a diagnostic line showing detected filter option count from the configured relationship field.
 9. Relationship option detection now scans all published dealers (not only geocoded dealers) so diagnostics reflect available field data earlier.
 10. Relationship value parsing now supports multiple storage/return formats (objects, IDs, serialized arrays, formatted/unformatted ACF reads).
+11. Frontend single dealer views now explicitly ensure the top admin bar shows `Edit Dealer` (for users who can edit the dealer post).
 
 ## Files changed
 
@@ -81,6 +82,26 @@ Revert options:
 2. Keep relationship helpers but disable feature:
 - Force rwdp_get_dealer_filter_settings() to return enabled=false.
 
+### 3) includes/access-control.php
+Changes made:
+1. Added a dedicated frontend admin-bar hook:
+- `add_action( 'admin_bar_menu', 'rwdp_ensure_edit_dealer_admin_bar_node', 1000 )`
+2. Added helper function `rwdp_ensure_edit_dealer_admin_bar_node( $wp_admin_bar )` that:
+- Runs only on `is_singular( 'rw_dealer' )`
+- Checks `current_user_can( 'edit_post', $post_id )`
+- Pulls edit URL via `get_edit_post_link( $post_id )`
+- Adds/overrides admin-bar node id `edit` with title `Edit Dealer`
+3. This preserves dealer-role behavior (admin bar still hidden for `rwdp_dealer`) and only affects users who already see the admin bar.
+
+Why this was needed:
+1. On the plugin's frontend dealer template, the default WordPress `edit` node can be missing or not clearly labeled due to theme/plugin admin-bar customizations.
+2. Explicitly adding node id `edit` at late priority guarantees visibility and a clear label for editors/managers/admins.
+
+Revert options:
+1. Remove `add_action( 'admin_bar_menu', 'rwdp_ensure_edit_dealer_admin_bar_node', 1000 )`.
+2. Remove `rwdp_ensure_edit_dealer_admin_bar_node()` function block.
+3. No database migration is required for revert.
+
 ## Backward compatibility notes
 1. JS API contract intentionally unchanged.
 2. Existing shortcode attribute dealer_type is still accepted.
@@ -111,6 +132,8 @@ Revert options:
 - Warning appears in settings.
 - No fatal errors on frontend.
 6. No PHP warnings/fatal errors on frontend or settings page.
+7. On frontend single dealer pages, eligible users (admins/editors/portal managers with dealer edit caps) see top-bar `Edit Dealer` and link opens wp-admin edit screen for that dealer.
+8. Dealer users (`rwdp_dealer`) still do not see admin bar.
 
 ## Notes for AI agents
 1. Preserve request/response keys used by assets/js/dealer-map.js unless intentionally versioning frontend behavior.

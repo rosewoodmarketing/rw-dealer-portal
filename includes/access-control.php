@@ -149,6 +149,31 @@ function rwdp_clean_portal_manager_admin_bar( $wp_admin_bar ) {
 	$wp_admin_bar->remove_node( 'appearance' );
 }
 
+// Ensure the default WordPress edit node is visible/labeled for dealer singles.
+add_action( 'admin_bar_menu', 'rwdp_ensure_edit_dealer_admin_bar_node', 1000 );
+
+function rwdp_ensure_edit_dealer_admin_bar_node( $wp_admin_bar ) {
+	if ( ! is_singular( 'rw_dealer' ) ) {
+		return;
+	}
+
+	$post_id = get_queried_object_id();
+	if ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
+		return;
+	}
+
+	$edit_link = get_edit_post_link( $post_id );
+	if ( ! $edit_link ) {
+		return;
+	}
+
+	$wp_admin_bar->add_node( [
+		'id'    => 'edit',
+		'title' => esc_html__( 'Edit Dealer', 'rw-dealer-portal' ),
+		'href'  => $edit_link,
+	] );
+}
+
 // ── Portal Manager: limit user editing to dealer/portal_manager roles only ───
 add_filter( 'editable_roles', 'rwdp_limit_portal_manager_editable_roles' );
 
