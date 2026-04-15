@@ -505,3 +505,7 @@
 .rwdp-form-message {
   margin-bottom: 12px;
 }
+
+.rwdp-auth-tabs a{
+  padding: 5px;
+} 
