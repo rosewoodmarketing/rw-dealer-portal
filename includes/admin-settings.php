@@ -85,7 +85,7 @@ function rwdp_admin_settings_page() {
 		'contact'    => __( 'Contact Form', 'rw-dealer-portal' ),
 		'pages'      => __( 'Portal Pages', 'rw-dealer-portal' ),
 		'restricted' => __( 'Restricted Pages', 'rw-dealer-portal' ),
-		'dealer_finder' => __( 'Dealer Finder', 'rw-dealer-portal' ),
+		'dealer_finder' => __( 'Dealer Project Relation', 'rw-dealer-portal' ),
 	];
 
 	$acf_mode_warning = '';
@@ -336,13 +336,13 @@ function rwdp_admin_settings_page() {
 						<?php elseif ( 'dealer_finder' === $current_tab ) : ?>
 
 							<tr>
-								<th scope="row"><?php esc_html_e( 'Enable Type Dropdown', 'rw-dealer-portal' ); ?></th>
+								<th scope="row"><?php esc_html_e( 'Enable Project Type Dropdown', 'rw-dealer-portal' ); ?></th>
 								<td>
 									<label for="rwdp_enable_type_dropdown">
 										<input type="checkbox" id="rwdp_enable_type_dropdown" name="rwdp_settings[enable_type_dropdown]" value="1" <?php checked( $enable_dropdown ); ?> />
-										<?php esc_html_e( 'Show type dropdown on the Dealer Finder map page.', 'rw-dealer-portal' ); ?>
+										<?php esc_html_e( 'Show project type dropdown on the Dealer Finder map page.', 'rw-dealer-portal' ); ?>
 									</label>
-									<p class="description"><?php esc_html_e( 'If unchecked, the map page will not show a type dropdown. Locked shortcode filtering can still be used.', 'rw-dealer-portal' ); ?></p>
+									<p class="description"><?php esc_html_e( 'If unchecked, the map page will not show a project type dropdown. Locked shortcode filtering can still be used.', 'rw-dealer-portal' ); ?></p>
 								</td>
 							</tr>
 

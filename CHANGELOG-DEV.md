@@ -21,6 +21,7 @@ This file is for the next developer (human or AI) to quickly understand:
 9. Relationship option detection now scans all published dealers (not only geocoded dealers) so diagnostics reflect available field data earlier.
 10. Relationship value parsing now supports multiple storage/return formats (objects, IDs, serialized arrays, formatted/unformatted ACF reads).
 11. Frontend single dealer views now explicitly ensure the top admin bar shows `Edit Dealer` (for users who can edit the dealer post).
+12. Dealer Finder map now supports dual filters: ACF relationship dropdown and rw_dealer_type taxonomy dropdown together.
 
 ## Files changed
 
@@ -73,6 +74,9 @@ Changes made:
 4. Added safeguards so empty/missing field name does not create invalid meta queries.
 5. Option discovery now reads from all published dealers to prevent false zero-count diagnostics before geocoding is complete.
 6. Relationship field reading now tries unformatted ACF, formatted ACF, then raw post meta for broader compatibility.
+7. Reintroduced taxonomy dropdown (`rw_dealer_type`) alongside relationship dropdown on the map controls.
+8. AJAX now accepts both `type_id` (relationship) and `tax_type_id` (taxonomy) and applies both constraints together.
+9. Dealer payload now includes `taxonomy_type_ids` in addition to `type_ids` for debugging/extension use.
 
 Revert options:
 1. Full revert to previous taxonomy model:
@@ -132,8 +136,11 @@ Revert options:
 - Warning appears in settings.
 - No fatal errors on frontend.
 6. No PHP warnings/fatal errors on frontend or settings page.
-7. On frontend single dealer pages, eligible users (admins/editors/portal managers with dealer edit caps) see top-bar `Edit Dealer` and link opens wp-admin edit screen for that dealer.
-8. Dealer users (`rwdp_dealer`) still do not see admin bar.
+7. With dual filters shown, selecting either dropdown updates map/results immediately.
+8. When both dropdowns are selected, results match dealers satisfying both filters.
+9. Taxonomy dropdown options come from `rw_dealer_type` terms and can be used independently or with relationship filter.
+10. On frontend single dealer pages, eligible users (admins/editors/portal managers with dealer edit caps) see top-bar `Edit Dealer` and link opens wp-admin edit screen for that dealer.
+11. Dealer users (`rwdp_dealer`) still do not see admin bar.
 
 ## Notes for AI agents
 1. Preserve request/response keys used by assets/js/dealer-map.js unless intentionally versioning frontend behavior.

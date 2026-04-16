@@ -226,6 +226,7 @@ function rwdp_dealer_finder_shortcode( $atts ) {
 	$form_id  = absint( $settings['contact_form_id'] ?? 0 );
 	$filter_settings = rwdp_get_dealer_filter_settings();
 	$filter_options  = rwdp_get_relationship_filter_options( $filter_settings['acf_field'] );
+	$taxonomy_options = get_terms( [ 'taxonomy' => 'rw_dealer_type', 'hide_empty' => true ] );
 
 	// Store the raw dealer_type value for AJAX to resolve server-side.
 	$locked_type_slug = sanitize_text_field( $atts['dealer_type'] );
@@ -264,9 +265,9 @@ function rwdp_dealer_finder_shortcode( $atts ) {
 				if ( ! empty( $filter_options ) ) :
 			?>
 			<div class="rwdp-finder__type-filter">
-				<label for="rwdp-type-filter"><?php esc_html_e( 'Type:', 'rw-dealer-portal' ); ?></label>
-				<select id="rwdp-type-filter">
-					<option value=""><?php esc_html_e( 'All Types', 'rw-dealer-portal' ); ?></option>
+				<label for="rwdp-related-filter"><?php esc_html_e( 'Dealer Project Type:', 'rw-dealer-portal' ); ?></label>
+				<select id="rwdp-related-filter">
+					<option value=""><?php esc_html_e( 'All Project Types', 'rw-dealer-portal' ); ?></option>
 					<?php foreach ( $filter_options as $option ) : ?>
 						<option value="<?php echo absint( $option['id'] ); ?>">
 							<?php echo esc_html( $option['label'] ); ?>
@@ -275,6 +276,21 @@ function rwdp_dealer_finder_shortcode( $atts ) {
 				</select>
 			</div>
 			<?php endif; // $filter_options
+
+				if ( $taxonomy_options && ! is_wp_error( $taxonomy_options ) ) :
+			?>
+			<div class="rwdp-finder__type-filter">
+				<label for="rwdp-tax-filter"><?php esc_html_e( 'Dealer Type:', 'rw-dealer-portal' ); ?></label>
+				<select id="rwdp-tax-filter">
+					<option value=""><?php esc_html_e( 'All Dealer Types', 'rw-dealer-portal' ); ?></option>
+					<?php foreach ( $taxonomy_options as $type_term ) : ?>
+						<option value="<?php echo absint( $type_term->term_id ); ?>">
+							<?php echo esc_html( $type_term->name ); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+			</div>
+			<?php endif; // $taxonomy_options
 		endif; // ! $locked_type_slug
 		?>
 		</div>
@@ -325,6 +341,7 @@ function rwdp_ajax_get_dealers() {
 	$field_name      = $filter_settings['acf_field'];
 	$filter_options  = rwdp_get_relationship_filter_options( $field_name );
 	$type_filter     = 0;
+	$taxonomy_filter = 0;
 
 	// If a locked value was sent from shortcode, resolve it to a related post ID
 	// (try numeric ID first, then slug/name from available filter options).
@@ -334,6 +351,10 @@ function rwdp_ajax_get_dealers() {
 	} elseif ( $filter_settings['enabled'] && $field_name ) {
 		// Dropdown-based filter (regular shortcode, no locked type).
 		$type_filter = absint( $_POST['type_id'] ?? 0 );
+	}
+
+	if ( $filter_settings['enabled'] ) {
+		$taxonomy_filter = absint( $_POST['tax_type_id'] ?? 0 );
 	}
 
 	$args = [
@@ -357,6 +378,14 @@ function rwdp_ajax_get_dealers() {
 		];
 	}
 
+	if ( $taxonomy_filter ) {
+		$args['tax_query'] = [ [
+			'taxonomy' => 'rw_dealer_type',
+			'field'    => 'term_id',
+			'terms'    => $taxonomy_filter,
+		] ];
+	}
+
 	$dealers = get_posts( $args );
 	$data    = [];
 
@@ -372,6 +401,7 @@ function rwdp_ajax_get_dealers() {
 		$zip   = get_post_meta( $dealer->ID, '_rwdp_zip',     true );
 
 		$type_ids = [];
+		$taxonomy_type_ids = [];
 		if ( $field_name ) {
 			$field_value = null;
 			if ( function_exists( 'get_field' ) ) {
@@ -384,6 +414,11 @@ function rwdp_ajax_get_dealers() {
 				$field_value = get_post_meta( $dealer->ID, $field_name, true );
 			}
 			$type_ids = rwdp_normalize_related_post_ids( $field_value );
+		}
+
+		$taxonomy_terms = get_the_terms( $dealer->ID, 'rw_dealer_type' );
+		if ( $taxonomy_terms && ! is_wp_error( $taxonomy_terms ) ) {
+			$taxonomy_type_ids = array_map( 'absint', wp_list_pluck( $taxonomy_terms, 'term_id' ) );
 		}
 
 		$data[] = [
@@ -403,6 +438,7 @@ function rwdp_ajax_get_dealers() {
 			'feat_img'   => $feat_img ?: '',
 			'permalink'  => get_permalink( $dealer->ID ),
 			'type_ids'   => array_map( 'absint', $type_ids ),
+			'taxonomy_type_ids' => $taxonomy_type_ids,
 		];
 	}
 
