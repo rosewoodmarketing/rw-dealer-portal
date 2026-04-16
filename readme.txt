@@ -4,7 +4,7 @@ Tags: dealer, dealer finder, dealer portal, dealer locator, elementor
 Requires at least: 6.5
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.0.7
+Stable tag: 1.0.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -62,6 +62,11 @@ Use the **Lock to Dealer Type** control on the Dealer Search Bar widget and ente
 4. Plugin settings screen (Google Maps API key, page assignments).
 
 == Changelog ==
+
+= 1.0.8 =
+* Added: Image Resolution controls for thumbnail and logo in the Dealer Results List widget Content tab.
+* Improved: Image size options are now dynamically populated from all registered WordPress image sizes (core + custom).
+* Changed: AJAX handler now accepts and validates `thumbnail_image_size` and `logo_image_size` parameters, replacing the hardcoded `'thumbnail'` size for both `feat_img` and `logo_url`.
 
 = 1.0.7 =
 * Added: Settings page redesigned with left-side tabbed navigation (Maps API Keys, Contact Form, Portal Pages, Restricted Pages).
