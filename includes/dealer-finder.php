@@ -167,6 +167,12 @@ function rwdp_ajax_get_dealers() {
 
 	$type_filter = 0;
 
+	$allowed_sizes      = array_merge( [ 'full' ], array_keys( wp_get_registered_image_subsizes() ) );
+	$raw_thumb_size     = sanitize_key( wp_unslash( $_POST['thumbnail_image_size'] ?? 'large' ) );
+	$raw_logo_size      = sanitize_key( wp_unslash( $_POST['logo_image_size']      ?? 'large' ) );
+	$thumbnail_img_size = in_array( $raw_thumb_size, $allowed_sizes, true ) ? $raw_thumb_size : 'large';
+	$logo_img_size      = in_array( $raw_logo_size,  $allowed_sizes, true ) ? $raw_logo_size  : 'large';
+
 	// If a locked type slug was sent from the shortcode, resolve it server-side
 	// (try slug first, fall back to term name).
 	$locked_type_slug = sanitize_text_field( wp_unslash( $_POST['locked_type'] ?? '' ) );
@@ -211,7 +217,7 @@ function rwdp_ajax_get_dealers() {
 		$lat      = (float) get_post_meta( $dealer->ID, '_rwdp_lat',          true );
 		$lng      = (float) get_post_meta( $dealer->ID, '_rwdp_lng',          true );
 		$logo_id  = get_post_meta( $dealer->ID, '_rwdp_logo_id', true );
-		$feat_img = get_the_post_thumbnail_url( $dealer->ID, 'thumbnail' );
+		$feat_img = get_the_post_thumbnail_url( $dealer->ID, $thumbnail_img_size );
 
 		// Build address string for info window
 		$city  = get_post_meta( $dealer->ID, '_rwdp_city',    true );
@@ -234,7 +240,7 @@ function rwdp_ajax_get_dealers() {
 			'state'      => $state,
 			'zip'        => $zip,
 			'hours'      => get_post_meta( $dealer->ID, '_rwdp_hours',        true ),
-			'logo_url'   => $logo_id ? wp_get_attachment_image_url( $logo_id, 'thumbnail' ) : '',
+			'logo_url'   => $logo_id ? wp_get_attachment_image_url( $logo_id, $logo_img_size ) : '',
 			'feat_img'   => $feat_img ?: '',
 			'permalink'  => get_permalink( $dealer->ID ),
 			'type_ids'   => array_map( 'absint', $type_ids ),

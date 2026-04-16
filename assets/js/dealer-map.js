@@ -288,13 +288,16 @@ var rwdpInitMap; // exposed globally for Google Maps callback
   // Fetch dealers from server
   // -----------------------------------------------------------------------
   function fetchDealers(callback) {
-    var lockedType = $('#rwdp-dealer-finder').data('locked-type') || '';
-    var typeId     = lockedType ? '' : ($('#rwdp-type-filter').val() || '');
+    var lockedType        = $('#rwdp-dealer-finder').data('locked-type') || '';
+    var typeId            = lockedType ? '' : ($('#rwdp-type-filter').val() || '');
+    var $resultsList      = $('#rwdp-results-list');
+    var thumbnailImgSize  = $resultsList.data('thumbnail-image-size') || 'large';
+    var logoImgSize       = $resultsList.data('logo-image-size')      || 'large';
 
     $.ajax({
       url    : rwdpMap.ajaxUrl,
       method : 'POST',
-      data   : { action: 'rwdp_get_dealers', nonce: rwdpMap.nonce, type_id: typeId, locked_type: lockedType },
+      data   : { action: 'rwdp_get_dealers', nonce: rwdpMap.nonce, type_id: typeId, locked_type: lockedType, thumbnail_image_size: thumbnailImgSize, logo_image_size: logoImgSize },
       success: function (res) {
         if (res.success && res.data.dealers) {
           allDealers = res.data.dealers;

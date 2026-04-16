@@ -32,6 +32,27 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 	}
 
 	// -----------------------------------------------------------------------
+	// Helpers
+	// -----------------------------------------------------------------------
+	private static function get_image_size_options(): array {
+		$options = [ 'full' => __( 'Full Size', 'rw-dealer-portal' ) ];
+
+		foreach ( wp_get_registered_image_subsizes() as $slug => $data ) {
+			$label = ucwords( str_replace( [ '-', '_' ], ' ', $slug ) );
+			if ( ! empty( $data['width'] ) && ! empty( $data['height'] ) ) {
+				$label .= ' (' . $data['width'] . '×' . $data['height'] . ')';
+			} elseif ( ! empty( $data['width'] ) ) {
+				$label .= ' (' . $data['width'] . 'w)';
+			} elseif ( ! empty( $data['height'] ) ) {
+				$label .= ' (' . $data['height'] . 'h)';
+			}
+			$options[ $slug ] = $label;
+		}
+
+		return $options;
+	}
+
+	// -----------------------------------------------------------------------
 	// Controls
 	// -----------------------------------------------------------------------
 	protected function register_controls() {
@@ -94,6 +115,31 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 				'default'      => 'yes',
 			] );
 		}
+
+		$this->end_controls_section();
+
+		// ── Content: Image Settings ──────────────────────────────────────
+		$this->start_controls_section( 'section_images', [
+			'label' => __( 'Image Settings', 'rw-dealer-portal' ),
+		] );
+
+		$image_size_options = self::get_image_size_options();
+
+		$this->add_control( 'thumbnail_image_size', [
+			'label'     => __( 'Thumbnail Resolution', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::SELECT,
+			'default'   => 'large',
+			'options'   => $image_size_options,
+			'condition' => [ 'show_thumbnail' => 'yes' ],
+		] );
+
+		$this->add_control( 'logo_image_size', [
+			'label'     => __( 'Logo Resolution', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::SELECT,
+			'default'   => 'large',
+			'options'   => $image_size_options,
+			'condition' => [ 'show_logo' => 'yes' ],
+		] );
 
 		$this->end_controls_section();
 
@@ -911,6 +957,8 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 			'data-contact-text="'             . esc_attr( $s['contact_text']     ?? __( 'Contact This Dealer', 'rw-dealer-portal' ) ) . '"',
 			'data-more-info-text="'           . esc_attr( $s['more_info_text']   ?? __( 'More Info',          'rw-dealer-portal' ) ) . '"',
 			'data-view-on-map-text="'         . esc_attr( $s['view_on_map_text'] ?? __( 'View on Map',        'rw-dealer-portal' ) ) . '"',
+			'data-thumbnail-image-size="'     . esc_attr( $s['thumbnail_image_size'] ?? 'large' ) . '"',
+			'data-logo-image-size="'          . esc_attr( $s['logo_image_size']      ?? 'large' ) . '"',
 		] );
 		?>
 		<div class="rwdp-finder__results" id="rwdp-results-list" <?php echo $data_attrs; // phpcs:ignore WordPress.Security.EscapeOutput -- attrs escaped above ?>>
