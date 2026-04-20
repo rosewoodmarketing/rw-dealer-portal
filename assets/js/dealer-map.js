@@ -289,7 +289,8 @@ var rwdpInitMap; // exposed globally for Google Maps callback
   // -----------------------------------------------------------------------
   function fetchDealers(callback) {
     var lockedType        = $('#rwdp-dealer-finder').data('locked-type') || '';
-    var typeId            = lockedType ? '' : ($('#rwdp-type-filter').val() || '');
+    var typeId            = lockedType ? '' : ($('#rwdp-related-filter').val() || $('#rwdp-type-filter').val() || '');
+    var taxTypeId         = lockedType ? '' : ($('#rwdp-tax-filter').val() || '');
     var $resultsList      = $('#rwdp-results-list');
     var thumbnailImgSize  = $resultsList.data('thumbnail-image-size') || 'large';
     var logoImgSize       = $resultsList.data('logo-image-size')      || 'large';
@@ -297,7 +298,15 @@ var rwdpInitMap; // exposed globally for Google Maps callback
     $.ajax({
       url    : rwdpMap.ajaxUrl,
       method : 'POST',
-      data   : { action: 'rwdp_get_dealers', nonce: rwdpMap.nonce, type_id: typeId, locked_type: lockedType, thumbnail_image_size: thumbnailImgSize, logo_image_size: logoImgSize },
+      data   : {
+        action: 'rwdp_get_dealers',
+        nonce: rwdpMap.nonce,
+        type_id: typeId,
+        tax_type_id: taxTypeId,
+        locked_type: lockedType,
+        thumbnail_image_size: thumbnailImgSize,
+        logo_image_size: logoImgSize
+      },
       success: function (res) {
         if (res.success && res.data.dealers) {
           allDealers = res.data.dealers;
@@ -393,7 +402,7 @@ var rwdpInitMap; // exposed globally for Google Maps callback
   // -----------------------------------------------------------------------
   // Type filter change
   // -----------------------------------------------------------------------
-  $(document).on('change', '#rwdp-type-filter', function () {
+  $(document).on('change', '#rwdp-related-filter, #rwdp-type-filter, #rwdp-tax-filter', function () {
     fetchDealers(function (dealers) {
       placeMarkers(dealers);
     });
