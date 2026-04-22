@@ -41,6 +41,14 @@ function rwdp_register_admin_menu() {
 		'edit.php?post_type=rw_dealer'
 	);
 
+	add_submenu_page(
+		'rw-dealer-portal',
+		__( 'Add New Dealer', 'rw-dealer-portal' ),
+		__( 'Add New Dealer', 'rw-dealer-portal' ),
+		'edit_rw_dealers',
+		'post-new.php?post_type=rw_dealer'
+	);
+
 	// Assets CPT
 	add_submenu_page(
 		'rw-dealer-portal',
@@ -48,6 +56,14 @@ function rwdp_register_admin_menu() {
 		__( 'Assets', 'rw-dealer-portal' ),
 		'edit_rw_assets',
 		'edit.php?post_type=rw_asset'
+	);
+
+	add_submenu_page(
+		'rw-dealer-portal',
+		__( 'Add New Asset', 'rw-dealer-portal' ),
+		__( 'Add New Asset', 'rw-dealer-portal' ),
+		'edit_rw_assets',
+		'post-new.php?post_type=rw_asset'
 	);
 
 	// Contact Submissions
@@ -80,12 +96,12 @@ function rwdp_register_admin_menu() {
 		'rwdp_admin_settings_page'
 	);
 
-	// Dealer Types taxonomy
+	// Dealer Types taxonomy — admin only
 	add_submenu_page(
 		'rw-dealer-portal',
 		__( 'Dealer Types', 'rw-dealer-portal' ),
 		__( 'Dealer Types', 'rw-dealer-portal' ),
-		'manage_rwdp_portal',
+		'manage_options',
 		'edit-tags.php?taxonomy=rw_dealer_type&post_type=rw_dealer'
 	);
 }
@@ -208,6 +224,7 @@ function rwdp_admin_dashboard_page() {
 			<?php endforeach; ?>
 		</div>
 
+		<?php if ( current_user_can( 'manage_options' ) ) : ?>
 		<div class="rwdp-overview-footer">
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=rwdp-settings' ) ); ?>" class="rwdp-overview-settings-link">
 				<span class="dashicons dashicons-admin-settings"></span>
@@ -218,6 +235,7 @@ function rwdp_admin_dashboard_page() {
 				<?php esc_html_e( 'Dealer Types', 'rw-dealer-portal' ); ?>
 			</a>
 		</div>
+		<?php endif; ?>
 	</div>
 	<?php
 }

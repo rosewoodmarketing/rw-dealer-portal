@@ -22,6 +22,7 @@ function rwdp_register_post_types() {
 		'public'             => true,
 		'show_ui'            => true,
 		'show_in_menu'       => false, // shown in custom admin menu
+		'show_in_admin_bar'  => true,
 		'show_in_rest'       => true,
 		'supports'           => [ 'title', 'thumbnail'],
 		'has_archive'        => false,
@@ -50,6 +51,7 @@ function rwdp_register_post_types() {
 		'hierarchical'       => true,
 		'show_ui'            => true,
 		'show_in_menu'       => false,
+		'show_in_admin_bar'  => true,
 		'show_in_rest'       => true,
 		'supports'           => [ 'title', 'thumbnail', 'page-attributes' ],
 		'has_archive'        => false,
