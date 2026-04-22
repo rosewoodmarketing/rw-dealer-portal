@@ -3,6 +3,24 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 add_action( 'admin_init', 'rwdp_register_settings' );
 add_action( 'admin_enqueue_scripts', 'rwdp_admin_enqueue_assets' );
+add_action( 'admin_post_rwdp_rebuild_pages', 'rwdp_handle_rebuild_pages' );
+
+/**
+ * Handle the "Rebuild Default Pages" button submission.
+ */
+function rwdp_handle_rebuild_pages() {
+	check_admin_referer( 'rwdp_rebuild_pages', 'rwdp_rebuild_nonce' );
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_die( esc_html__( 'You do not have permission to do this.', 'rw-dealer-portal' ) );
+	}
+	rwdp_create_portal_pages();
+	wp_safe_redirect( add_query_arg( [
+		'page'         => 'rwdp-settings',
+		'tab'          => 'pages',
+		'rwdp_rebuilt' => '1',
+	], admin_url( 'admin.php' ) ) );
+	exit;
+}
 
 /**
  * Register the settings group used by the settings page form.
@@ -91,7 +109,7 @@ function rwdp_admin_settings_page() {
 		'contact'    => __( 'Contact Form', 'rw-dealer-portal' ),
 		'pages'      => __( 'Portal Pages', 'rw-dealer-portal' ),
 		'restricted' => __( 'Restricted Pages', 'rw-dealer-portal' ),
-		'dealer_finder' => __( 'Dealer Project Relation', 'rw-dealer-portal' ),
+		'dealer_finder' => __( 'ACF Relationships', 'rw-dealer-portal' ),
 	];
 
 	?>
@@ -99,6 +117,11 @@ function rwdp_admin_settings_page() {
 		<h1><?php esc_html_e( 'Dealer Portal Settings', 'rw-dealer-portal' ); ?></h1>
 
 		<?php settings_errors( 'rwdp_settings_group' ); ?>
+
+		<?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['rwdp_rebuilt'] ) && '1' === $_GET['rwdp_rebuilt'] ) : ?>
+			<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'Portal pages rebuilt successfully.', 'rw-dealer-portal' ); ?></p></div>
+		<?php endif; ?>
 
 		<div class="rwdp-settings-layout">
 
@@ -289,7 +312,7 @@ function rwdp_admin_settings_page() {
 											</option>
 										<?php endforeach; ?>
 									</select>
-									<p class="description"><?php esc_html_e( 'Dealers are sent here after logging in.', 'rw-dealer-portal' ); ?></p>
+									<p class="description"><?php esc_html_e( 'Page containing the [rwdp_dashboard] shortcode. Dealers are sent here after logging in.', 'rw-dealer-portal' ); ?></p>
 								</td>
 							</tr>
 
@@ -375,6 +398,18 @@ function rwdp_admin_settings_page() {
 
 					<?php submit_button(); ?>
 				</form>
+
+				<?php if ( 'pages' === $current_tab ) : ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:16px; padding-top:16px; border-top:1px solid #f0f0f1;">
+					<?php wp_nonce_field( 'rwdp_rebuild_pages', 'rwdp_rebuild_nonce' ); ?>
+					<input type="hidden" name="action" value="rwdp_rebuild_pages" />
+					<button type="submit" class="button button-secondary">
+						<?php esc_html_e( 'Rebuild Default Pages', 'rw-dealer-portal' ); ?>
+					</button>
+					<p class="description" style="margin-top:6px;"><?php esc_html_e( 'Re-creates any missing portal pages (Login, Dashboard, Assets, Account, etc.). Existing pages are not affected.', 'rw-dealer-portal' ); ?></p>
+				</form>
+				<?php endif; ?>
+
 			</div><!-- .rwdp-settings-content -->
 
 		</div><!-- .rwdp-settings-layout -->

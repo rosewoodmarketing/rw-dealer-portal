@@ -4,7 +4,7 @@ Tags: dealer, dealer finder, dealer portal, dealer locator, elementor
 Requires at least: 6.5
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.0.10
+Stable tag: 1.0.11
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -62,6 +62,12 @@ Use the **Lock to Dealer Type** control on the Dealer Search Bar widget and ente
 4. Plugin settings screen (Google Maps API key, page assignments).
 
 == Changelog ==
+
+= 1.0.11 =
+* Added: Portal Manager role now restricted to managing only `rwdp_dealer` and `rwdp_portal_manager` users — admins and other user types are hidden and protected from edit/delete actions.
+* Added: Portal Manager role dropdown when editing users is limited to `rwdp_dealer` and `rwdp_portal_manager` — prevents accidental role escalation.
+* Fixed: Portal Manager can now view and action pending registrations. Previously, the `pre_get_users` filter injected a `role__in` restriction that excluded pending users (who have no role), making the Pending Registrations page appear empty.
+* Fixed: Portal Manager `edit_user` capability now correctly allows approving pending registrations — users with `_rwdp_account_status = pending` are exempted from the role-based capability restriction.
 
 = 1.0.10 =
 * Fixed: "Lock to Dealer Type" on the Dealer Search Bar widget now correctly filters by `rw_dealer_type` taxonomy slug when no matching ACF relationship field is found. Previously, if the ACF fields were not configured or the slug didn't match an ACF relationship option, the lock was silently ignored and all dealers were returned.

@@ -222,6 +222,88 @@ function rwdp_sync_admin_caps() {
 add_action( 'plugins_loaded', 'rwdp_sync_admin_caps' );
 
 /**
+ * Restrict Portal Managers to only see Dealer and Portal Manager users
+ * in the admin Users list.
+ */
+add_action( 'pre_get_users', 'rwdp_limit_user_list_for_portal_manager' );
+function rwdp_limit_user_list_for_portal_manager( $query ) {
+	if ( ! is_admin() ) {
+		return;
+	}
+	// Only restrict the WP core users list screen — not the pending registrations
+	// page or any other internal get_users() call, which would filter out
+	// pending users who have no role yet.
+	if ( ( $GLOBALS['pagenow'] ?? '' ) !== 'users.php' ) {
+		return;
+	}
+	// Admins are unaffected.
+	if ( current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	if ( ! current_user_can( 'manage_rwdp_portal' ) ) {
+		return;
+	}
+	$query->set( 'role__in', [ 'rwdp_dealer', 'rwdp_portal_manager' ] );
+}
+
+/**
+ * Prevent Portal Managers from editing, deleting, or promoting users
+ * who do not have the Dealer or Portal Manager role.
+ */
+add_filter( 'user_has_cap', 'rwdp_restrict_portal_manager_user_caps', 10, 4 );
+function rwdp_restrict_portal_manager_user_caps( $allcaps, $caps, $args, $user ) {
+	// Only apply to portal managers. Admins (manage_options) are unaffected.
+	if ( empty( $user->roles ) || ! in_array( 'rwdp_portal_manager', (array) $user->roles, true ) ) {
+		return $allcaps;
+	}
+	if ( ! empty( $allcaps['manage_options'] ) ) {
+		return $allcaps;
+	}
+
+	$restricted_meta_caps = [ 'edit_user', 'delete_user', 'promote_user', 'remove_user' ];
+	if ( empty( $args[0] ) || ! in_array( $args[0], $restricted_meta_caps, true ) ) {
+		return $allcaps;
+	}
+
+	$target_user_id = isset( $args[2] ) ? (int) $args[2] : 0;
+	// Always allow editing yourself.
+	if ( ! $target_user_id || $target_user_id === (int) $user->ID ) {
+		return $allcaps;
+	}
+
+	$target        = get_userdata( $target_user_id );
+	$allowed_roles = [ 'rwdp_dealer', 'rwdp_portal_manager' ];
+	if ( $target && empty( array_intersect( (array) $target->roles, $allowed_roles ) ) ) {
+		// Allow acting on users who are in the plugin's own pending registration
+		// queue — they haven't been assigned the dealer role yet.
+		$is_pending = get_user_meta( $target_user_id, '_rwdp_account_status', true ) === 'pending';
+		if ( ! $is_pending ) {
+			// Target user is neither a dealer/manager nor a pending applicant — deny.
+			foreach ( $caps as $cap ) {
+				$allcaps[ $cap ] = false;
+			}
+		}
+	}
+
+	return $allcaps;
+}
+
+/**
+ * Limit which roles a Portal Manager can assign when creating or editing users.
+ * Only Dealer and Portal Manager appear in the role dropdown for them.
+ */
+add_filter( 'editable_roles', 'rwdp_restrict_portal_manager_editable_roles' );
+function rwdp_restrict_portal_manager_editable_roles( $roles ) {
+	if ( current_user_can( 'manage_options' ) ) {
+		return $roles;
+	}
+	if ( ! current_user_can( 'manage_rwdp_portal' ) ) {
+		return $roles;
+	}
+	return array_intersect_key( $roles, array_flip( [ 'rwdp_dealer', 'rwdp_portal_manager' ] ) );
+}
+
+/**
  * Remove custom roles on plugin uninstall (called from uninstall.php).
  */
 function rwdp_remove_roles() {

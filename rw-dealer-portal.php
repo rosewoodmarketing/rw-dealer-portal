@@ -2,7 +2,7 @@
 /**
  * Plugin Name: RW Dealer Portal
  * Description: A dealer portal for businesses that operate with a dealer network. Dealers log in to access digital assets. A public-facing Dealer Finder lets visitors search and contact dealers.
- * Version: 1.0.10
+ * Version: 1.0.11
  * Author: Rosewood Marketing
  * Plugin URI: https://github.com/rosewoodmarketing/rw-dealer-portal
  * Requires at least: 6.5
@@ -17,7 +17,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'RWDP_VERSION',    '1.0.10' );
+define( 'RWDP_VERSION',    '1.0.11' );
 define( 'RWDP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'RWDP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
