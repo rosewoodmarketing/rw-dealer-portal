@@ -23,7 +23,7 @@ function rwdp_register_post_types() {
 		'show_ui'            => true,
 		'show_in_menu'       => false, // shown in custom admin menu
 		'show_in_rest'       => true,
-		'supports'           => [ 'title', 'thumbnail', 'editor' ],
+		'supports'           => [ 'title', 'thumbnail'],
 		'has_archive'        => false,
 		'rewrite'            => [ 'slug' => 'dealer', 'with_front' => false ],
 		'capability_type'    => [ 'rw_dealer', 'rw_dealers' ],
@@ -51,7 +51,7 @@ function rwdp_register_post_types() {
 		'show_ui'            => true,
 		'show_in_menu'       => false,
 		'show_in_rest'       => true,
-		'supports'           => [ 'title', 'editor', 'thumbnail', 'excerpt', 'page-attributes' ],
+		'supports'           => [ 'title', 'thumbnail', 'page-attributes' ],
 		'has_archive'        => false,
 		'rewrite'            => [ 'slug' => 'portal-asset', 'with_front' => false ],
 		'capability_type'    => [ 'rw_asset', 'rw_assets' ],

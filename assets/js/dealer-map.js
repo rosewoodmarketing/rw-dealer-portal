@@ -46,7 +46,7 @@ var rwdpInitMap; // exposed globally for Google Maps callback
     var html = '<div class="rwdp-infowindow">';
 
     if ( show.logo && dealer.logo_url ) {
-        html += '<img src="' + dealer.logo_url + '" alt="' + escHtml(dealer.title) + ' logo" class="rwdp-infowindow__logo" />';
+        html += '<img src="' + escAttr(dealer.logo_url) + '" alt="' + escAttr(dealer.title + ' logo') + '" class="rwdp-infowindow__logo" />';
       }
 
     html += '<h3 class="rwdp-infowindow__name">' + escHtml(dealer.title) + '</h3>';
@@ -58,7 +58,8 @@ var rwdpInitMap; // exposed globally for Google Maps callback
       html += '<p><a href="tel:' + escHtml(dealer.phone) + '">' + escHtml(dealer.phone) + '</a></p>';
     }
     if ( show.website && dealer.website) {
-      html += '<p><a href="' + escHtml(dealer.website) + '" target="_blank" rel="noopener noreferrer">' + escHtml(dealer.website) + '</a></p>';
+      var websiteDisplay = dealer.website.replace( /^https?:\/\/(www\.)?/i, '' );
+      html += '<p><a href="' + escAttr(dealer.website) + '" target="_blank" rel="noopener noreferrer">' + escHtml(websiteDisplay) + '</a></p>';
     }
     if ( show.hours && dealer.hours) {
       html += '<p class="rwdp-infowindow__hours">' + escHtml(dealer.hours).replace(/\n/g, '<br>') + '</p>';
@@ -70,8 +71,8 @@ var rwdpInitMap; // exposed globally for Google Maps callback
       var dirIconHtml = $('#rwdp-map').attr('data-directions-icon') || '';
       var dirIconPos  = $('#rwdp-map').attr('data-directions-icon-position') || 'before';
       var dirInner    = dirIconPos === 'before'
-          ? dirIconHtml + show.directions_text
-          : show.directions_text + dirIconHtml;
+          ? dirIconHtml + escHtml(show.directions_text)
+          : escHtml(show.directions_text) + dirIconHtml;
       html += '<a href="' + mapsUrl + '" class="rwdp-btn rwdp-btn--outline rwdp-btn--sm rwdp-popup-dir-btn" target="_blank" rel="noopener noreferrer">' + dirInner + '</a>';
     }
 
@@ -162,6 +163,7 @@ var rwdpInitMap; // exposed globally for Google Maps callback
       title      : $el.data('show-title')       !== 0 && $el.data('show-title')       !== '0',
       address    : $el.data('show-address')     !== 0 && $el.data('show-address')     !== '0',
       phone      : $el.data('show-phone')       !== 0 && $el.data('show-phone')       !== '0',
+      website    : $el.data('show-website')     !== 0 && $el.data('show-website')     !== '0',
       hours      : $el.data('show-hours')       !== 0 && $el.data('show-hours')       !== '0',
       directions : $el.data('show-directions')  !== 0 && $el.data('show-directions')  !== '0',
       contact    : $el.data('show-contact')     !== 0 && $el.data('show-contact')     !== '0',
@@ -250,6 +252,12 @@ var rwdpInitMap; // exposed globally for Google Maps callback
         card += '<div class="rwdp-result-card__phone"><a href="tel:' + escAttr(tel) + '">' + escHtml(dealer.phone) + '</a></div>';
       }
 
+      // Website
+      if (t.website && dealer.website) {
+        var websiteDisplay = dealer.website.replace( /^https?:\/\/(www\.)?/i, '' );
+        card += '<div class="rwdp-result-card__website"><a href="' + escAttr(dealer.website) + '" target="_blank" rel="noopener noreferrer">' + escHtml(websiteDisplay) + '</a></div>';
+      }
+
       // Hours
       if (t.hours && dealer.hours) {
         card += '<div class="rwdp-result-card__hours">' + escHtml(dealer.hours) + '</div>';
@@ -288,12 +296,23 @@ var rwdpInitMap; // exposed globally for Google Maps callback
   // Fetch dealers from server
   // -----------------------------------------------------------------------
   function fetchDealers(callback) {
-    var lockedType        = $('#rwdp-dealer-finder').data('locked-type') || '';
-    var typeId            = lockedType ? '' : ($('#rwdp-related-filter').val() || $('#rwdp-type-filter').val() || '');
-    var taxTypeId         = lockedType ? '' : ($('#rwdp-tax-filter').val() || '');
-    var $resultsList      = $('#rwdp-results-list');
-    var thumbnailImgSize  = $resultsList.data('thumbnail-image-size') || 'large';
-    var logoImgSize       = $resultsList.data('logo-image-size')      || 'large';
+    var lockedType       = $('#rwdp-dealer-finder').data('locked-type') || '';
+    var taxTypeId        = lockedType ? '' : ($('#rwdp-tax-filter').val() || '');
+    var $resultsList     = $('#rwdp-results-list');
+    var thumbnailImgSize = $resultsList.data('thumbnail-image-size') || 'large';
+    var logoImgSize      = $resultsList.data('logo-image-size')      || 'large';
+
+    // Collect all ACF filter dropdowns into { field_key: post_id } object.
+    var acfFilters = {};
+    if ( ! lockedType ) {
+      $('.rwdp-acf-filter').each(function () {
+        var key = $(this).data('field-key');
+        var val = $(this).val();
+        if ( key && val ) {
+          acfFilters[ key ] = val;
+        }
+      });
+    }
 
     $.ajax({
       url    : rwdpMap.ajaxUrl,
@@ -301,7 +320,7 @@ var rwdpInitMap; // exposed globally for Google Maps callback
       data   : {
         action: 'rwdp_get_dealers',
         nonce: rwdpMap.nonce,
-        type_id: typeId,
+        acf_filters: JSON.stringify( acfFilters ),
         tax_type_id: taxTypeId,
         locked_type: lockedType,
         thumbnail_image_size: thumbnailImgSize,
@@ -402,7 +421,7 @@ var rwdpInitMap; // exposed globally for Google Maps callback
   // -----------------------------------------------------------------------
   // Type filter change
   // -----------------------------------------------------------------------
-  $(document).on('change', '#rwdp-related-filter, #rwdp-type-filter, #rwdp-tax-filter', function () {
+  $(document).on('change', '.rwdp-acf-filter, #rwdp-tax-filter', function () {
     fetchDealers(function (dealers) {
       placeMarkers(dealers);
     });

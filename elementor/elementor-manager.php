@@ -11,6 +11,7 @@ final class RWDP_Elementor_Manager {
 	public static function init() {
 		add_action( 'elementor/elements/categories_registered', [ __CLASS__, 'register_category' ] );
 		add_action( 'elementor/widgets/register', [ __CLASS__, 'register_widgets' ] );
+		add_action( 'elementor/dynamic_tags/register', [ __CLASS__, 'register_dynamic_tags' ] );
 	}
 
 	public static function register_category( $elements_manager ) {
@@ -55,6 +56,41 @@ final class RWDP_Elementor_Manager {
 
 		foreach ( $widget_classes as $class ) {
 			$widgets_manager->register( new $class() );
+		}
+	}
+
+	public static function register_dynamic_tags( $dynamic_tags_manager ) {
+		\Elementor\Plugin::$instance->dynamic_tags->register_group(
+			'rw-dealer-portal',
+			[ 'title' => __( 'RW Dealer Portal', 'rw-dealer-portal' ) ]
+		);
+
+		$tag_files = [
+			'tag-address',
+			'tag-phone',
+			'tag-website',
+			'tag-email',
+			'tag-hours',
+			'tag-logo',
+			'tag-directions',
+		];
+
+		foreach ( $tag_files as $file ) {
+			require_once RWDP_PLUGIN_DIR . 'elementor/dynamic-tags/' . $file . '.php';
+		}
+
+		$tag_classes = [
+			'RWDP_Tag_Address',
+			'RWDP_Tag_Phone',
+			'RWDP_Tag_Website',
+			'RWDP_Tag_Email',
+			'RWDP_Tag_Hours',
+			'RWDP_Tag_Logo',
+			'RWDP_Tag_Directions',
+		];
+
+		foreach ( $tag_classes as $class ) {
+			$dynamic_tags_manager->register( new $class() );
 		}
 	}
 }

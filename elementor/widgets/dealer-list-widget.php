@@ -102,6 +102,7 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 			'show_phone'       => __( 'Show Phone',               'rw-dealer-portal' ),
 			'show_hours'       => __( 'Show Hours',               'rw-dealer-portal' ),
 			'show_directions'  => __( 'Show Get Directions',      'rw-dealer-portal' ),
+			'show_website'     => __( 'Show Website',              'rw-dealer-portal' ),
 			'show_contact'     => __( 'Show Contact This Dealer', 'rw-dealer-portal' ),
 			'show_more_info'   => __( 'Show More Info Button',    'rw-dealer-portal' ),
 			'show_view_on_map' => __( 'Show View on Map Button', 'rw-dealer-portal' ),
@@ -408,6 +409,32 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 			'type'       => \Elementor\Controls_Manager::DIMENSIONS,
 			'size_units' => [ 'px', 'em' ],
 			'selectors'  => [ '{{WRAPPER}} .rwdp-result-card__hours' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ],
+		] );
+
+		$this->end_controls_section();
+
+		// ── Style: Website ───────────────────────────────────────────────
+		$this->start_controls_section( 'style_website', [
+			'label' => __( 'Website', 'rw-dealer-portal' ),
+			'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
+		] );
+
+		$this->add_group_control( \Elementor\Group_Control_Typography::get_type(), [
+			'name'     => 'website_typography',
+			'selector' => '{{WRAPPER}} .rwdp-result-card__website',
+		] );
+
+		$this->add_control( 'website_color', [
+			'label'     => __( 'Link Color', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::COLOR,
+			'selectors' => [ '{{WRAPPER}} .rwdp-result-card__website, {{WRAPPER}} .rwdp-result-card__website a' => 'color: {{VALUE}};' ],
+		] );
+
+		$this->add_control( 'website_padding', [
+			'label'      => __( 'Padding', 'rw-dealer-portal' ),
+			'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+			'size_units' => [ 'px', 'em' ],
+			'selectors'  => [ '{{WRAPPER}} .rwdp-result-card__website' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};' ],
 		] );
 
 		$this->end_controls_section();
@@ -846,6 +873,7 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 		$show_phone       = $bool( $s['show_phone']       ?? 'yes' );
 		$show_hours       = $bool( $s['show_hours']       ?? 'yes' );
 		$show_directions  = $bool( $s['show_directions']  ?? 'yes' );
+		$show_website     = $bool( $s['show_website']     ?? 'yes' );
 		$show_contact     = $bool( $s['show_contact']     ?? 'yes' );
 		$show_more_info   = $bool( $s['show_more_info']   ?? 'yes' );
 		$show_view_on_map = $bool( $s['show_view_on_map'] ?? 'yes' );
@@ -893,6 +921,10 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 
 			if ( $show_phone ) {
 				echo '<div class="rwdp-result-card__phone"><a href="#">' . esc_html( $dealer['phone'] ) . '</a></div>';
+			}
+
+			if ( $show_website ) {
+				echo '<div class="rwdp-result-card__website"><a href="#">example.com</a></div>';
 			}
 
 			if ( $show_hours ) {
@@ -948,6 +980,7 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 			'data-show-phone="'               . esc_attr( $bool( $s['show_phone']       ?? 'yes' ) ) . '"',
 			'data-show-hours="'               . esc_attr( $bool( $s['show_hours']       ?? 'yes' ) ) . '"',
 			'data-show-directions="'          . esc_attr( $bool( $s['show_directions']  ?? 'yes' ) ) . '"',
+			'data-show-website="'             . esc_attr( $bool( $s['show_website']     ?? 'yes' ) ) . '"',
 			'data-show-contact="'             . esc_attr( $bool( $s['show_contact']     ?? 'yes' ) ) . '"',
 			'data-show-more-info="'           . esc_attr( $bool( $s['show_more_info']   ?? 'yes' ) ) . '"',
 			'data-show-view-on-map="'         . esc_attr( $bool( $s['show_view_on_map'] ?? 'yes' ) ) . '"',

@@ -199,7 +199,11 @@ function rwdp_save_dealer_meta( $post_id, $post ) {
 		} elseif ( $meta_key === '_rwdp_public_email' ) {
 			$value = sanitize_email( wp_unslash( $_POST[ $post_key ] ?? '' ) );
 		} elseif ( $meta_key === '_rwdp_website' ) {
-			$value = esc_url_raw( wp_unslash( $_POST[ $post_key ] ?? '' ) );
+			$raw = trim( wp_unslash( $_POST[ $post_key ] ?? '' ) );
+			if ( $raw !== '' && ! preg_match( '#^[a-z][a-z0-9+\-.]*://#i', $raw ) ) {
+				$raw = 'https://' . $raw;
+			}
+			$value = esc_url_raw( $raw );
 		} else {
 			$value = sanitize_text_field( wp_unslash( $_POST[ $post_key ] ?? '' ) );
 		}

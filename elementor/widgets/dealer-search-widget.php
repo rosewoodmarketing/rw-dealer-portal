@@ -146,16 +146,6 @@ class RWDP_Dealer_Search_Widget extends \Elementor\Widget_Base {
 			'default'      => 'yes',
 		] );
 
-		$this->add_control( 'show_type_filter', [
-			'label'        => __( 'Show Type Filter', 'rw-dealer-portal' ),
-			'type'         => \Elementor\Controls_Manager::SWITCHER,
-			'label_on'     => __( 'Show', 'rw-dealer-portal' ),
-			'label_off'    => __( 'Hide', 'rw-dealer-portal' ),
-			'return_value' => 'yes',
-			'default'      => 'yes',
-			'description'  => __( 'Only applies when "Lock to Dealer Type" is empty.', 'rw-dealer-portal' ),
-		] );
-
 		$this->end_controls_section();
 
 		// ── Style: Search Row ─────────────────────────────────────────────
@@ -403,7 +393,6 @@ class RWDP_Dealer_Search_Widget extends \Elementor\Widget_Base {
 		$button_text    = $s['button_text'] ?? '';
 		$show_radius    = ( $s['show_radius'] ?? 'yes' ) === 'yes';
 		$radius         = $s['radius'] ?? '50';
-		$show_type      = ( $s['show_type_filter'] ?? 'yes' ) === 'yes';
 		$has_icon       = ! empty( $s['button_icon']['value'] );
 		$icon_only      = $has_icon && ( $s['icon_only'] ?? '' ) === 'yes';
 		$icon_position  = $s['icon_position'] ?? 'before';
@@ -430,8 +419,12 @@ class RWDP_Dealer_Search_Widget extends \Elementor\Widget_Base {
 				: '<span>' . $button_label . '</span>' . $icon_html;
 		}
 		?>
+		<?php
+		$filter_settings_el = rwdp_get_dealer_filter_settings();
+		?>
 		<div class="rwdp-dealer-finder" id="rwdp-dealer-finder"
-		     data-locked-type="<?php echo esc_attr( $dealer_type ); ?>">
+		     data-locked-type="<?php echo esc_attr( $dealer_type ); ?>"
+		     data-filter-logic="<?php echo esc_attr( $filter_settings_el['filter_logic'] ); ?>">
 			<div class="rwdp-finder__controls">
 
 				<div class="rwdp-finder__search">
@@ -480,25 +473,13 @@ class RWDP_Dealer_Search_Widget extends \Elementor\Widget_Base {
 				<?php endif; ?>
 
 				<?php
-				if ( $show_type && ! $dealer_type ) :
-					$dealer_types = get_terms( [ 'taxonomy' => 'rw_dealer_type', 'hide_empty' => true ] );
-					if ( $dealer_types && ! is_wp_error( $dealer_types ) ) :
-				?>
-				<div class="rwdp-finder__type-filter">
-					<label for="rwdp-type-filter"><?php esc_html_e( 'Type:', 'rw-dealer-portal' ); ?></label>
-					<select id="rwdp-type-filter">
-						<option value=""><?php esc_html_e( 'All Types', 'rw-dealer-portal' ); ?></option>
-						<?php foreach ( $dealer_types as $type ) : ?>
-							<option value="<?php echo absint( $type->term_id ); ?>">
-								<?php echo esc_html( $type->name ); ?>
-							</option>
-						<?php endforeach; ?>
-					</select>
-				</div>
-				<?php
-					endif;
-				endif;
-				?>
+			$filter_settings = rwdp_get_dealer_filter_settings();
+			echo rwdp_render_filter_dropdowns( // phpcs:ignore WordPress.Security.EscapeOutput -- function escapes output
+				$filter_settings['active_fields'],
+				$filter_settings['filter_logic'],
+				$dealer_type
+			);
+			?>
 
 			</div>
 		</div>

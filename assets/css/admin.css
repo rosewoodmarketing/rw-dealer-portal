@@ -2,37 +2,161 @@
    RW Dealer Portal — Admin Styles
    ========================================================= */
 
-/* ---- Dashboard stat cards ---- */
-.rwdp-stat-cards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin: 20px 0;
+/* ---- Dashboard overview ---- */
+.rwdp-overview-wrap {
+  max-width: 1200px;
 }
 
-.rwdp-stat-card {
+.rwdp-overview-heading {
+  display: flex;
+  align-items: center;
+  font-size: 1.5rem;
+  margin-bottom: 24px;
+}
+
+.rwdp-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.rwdp-overview-card {
   background: #fff;
   border: 1px solid #c3c4c7;
-  border-radius: 4px;
-  padding: 20px 24px;
-  min-width: 160px;
-  flex: 1 1 160px;
-  text-align: center;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.rwdp-stat-card__number {
-  display: block;
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1d2327;
-  line-height: 1.2;
+.rwdp-overview-card--alert {
+  border-color: #d63638;
 }
 
-.rwdp-stat-card__label {
-  display: block;
-  font-size: 0.875rem;
+.rwdp-overview-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 14px;
+}
+
+.rwdp-overview-card__icon-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rwdp-overview-card__icon {
   color: #50575e;
-  margin-top: 4px;
+  font-size: 20px !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.rwdp-overview-card__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d2327;
+}
+
+.rwdp-overview-card__badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #50575e;
+  background: #f0f0f1;
+  border-radius: 3px;
+  padding: 3px 8px;
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+}
+
+.rwdp-overview-card__badge--alert {
+  background: #fce8e8;
+  color: #d63638;
+}
+
+.rwdp-overview-card__divider {
+  height: 1px;
+  background: #f0f0f1;
+  margin: 0;
+}
+
+.rwdp-overview-card__desc {
+  flex: 1;
+  padding: 16px 20px 12px;
+  font-size: 13px;
+  color: #50575e;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.rwdp-overview-card__actions {
+  padding: 0 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rwdp-overview-btn {
+  display: block;
+  text-align: center;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 3px;
+  text-decoration: none;
+  transition: opacity 0.15s, background 0.15s;
+  cursor: pointer;
+}
+
+.rwdp-overview-btn--primary {
+  background: #2271b1;
+  color: #fff;
+  border: 1px solid #2271b1;
+}
+
+.rwdp-overview-btn--primary:hover {
+  background: #135e96;
+  border-color: #135e96;
+  color: #fff;
+}
+
+.rwdp-overview-btn--secondary {
+  background: #fff;
+  color: #2271b1;
+  border: 1px solid #2271b1;
+}
+
+.rwdp-overview-btn--secondary:hover {
+  background: #f0f6fc;
+  color: #135e96;
+}
+
+.rwdp-overview-footer {
+  display: flex;
+  gap: 20px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f1;
+}
+
+.rwdp-overview-settings-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: #50575e;
+  text-decoration: none;
+}
+
+.rwdp-overview-settings-link:hover {
+  color: #2271b1;
+}
+
+.rwdp-overview-settings-link .dashicons {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 /* ---- Pending registrations table ---- */

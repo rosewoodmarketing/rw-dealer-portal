@@ -115,43 +115,108 @@ function rwdp_dealer_types_submenu_file( $submenu_file ) {
  * Portal overview dashboard page.
  */
 function rwdp_admin_dashboard_page() {
-	$dealer_count   = wp_count_posts( 'rw_dealer' )->publish ?? 0;
-	$asset_count    = wp_count_posts( 'rw_asset' )->publish ?? 0;
+	$dealer_count     = wp_count_posts( 'rw_dealer' )->publish ?? 0;
+	$asset_count      = wp_count_posts( 'rw_asset' )->publish ?? 0;
 	$submission_count = wp_count_posts( 'rw_submission' )->publish ?? 0;
-	$pending_count  = rwdp_get_pending_user_count();
+	$pending_count    = rwdp_get_pending_user_count();
 
+	$cards = [
+		[
+			'icon'        => 'dashicons-store',
+			'title'       => __( 'Dealers', 'rw-dealer-portal' ),
+			'count'       => absint( $dealer_count ),
+			'count_label' => __( 'Total', 'rw-dealer-portal' ),
+			'description' => __( 'Manage your network of authorized dealers.', 'rw-dealer-portal' ),
+			'primary_url' => admin_url( 'edit.php?post_type=rw_dealer' ),
+			'primary_txt' => __( 'Manage Dealers', 'rw-dealer-portal' ),
+			'secondary_url' => admin_url( 'post-new.php?post_type=rw_dealer' ),
+			'secondary_txt' => __( 'Add New Dealer', 'rw-dealer-portal' ),
+			'alert'       => false,
+		],
+		[
+			'icon'        => 'dashicons-media-document',
+			'title'       => __( 'Assets', 'rw-dealer-portal' ),
+			'count'       => absint( $asset_count ),
+			'count_label' => __( 'Items', 'rw-dealer-portal' ),
+			'description' => __( 'Control your digital brand asset library. Upload photos, brochures, videos, and more', 'rw-dealer-portal' ),
+			'primary_url' => admin_url( 'edit.php?post_type=rw_asset' ),
+			'primary_txt' => __( 'Manage Assets', 'rw-dealer-portal' ),
+			'secondary_url' => admin_url( 'post-new.php?post_type=rw_asset' ),
+			'secondary_txt' => __( 'Add New Asset', 'rw-dealer-portal' ),
+			'alert'       => false,
+		],
+		[
+			'icon'        => 'dashicons-feedback',
+			'title'       => __( 'Form Submissions', 'rw-dealer-portal' ),
+			'count'       => absint( $submission_count ),
+			'count_label' => __( 'Total', 'rw-dealer-portal' ),
+			'description' => __( 'Review customer inquiries and dealer contact requests submitted through the Dealer Finder.', 'rw-dealer-portal' ),
+			'primary_url' => admin_url( 'admin.php?page=rwdp-submissions' ),
+			'primary_txt' => __( 'View Submissions', 'rw-dealer-portal' ),
+			'secondary_url' => admin_url( 'admin.php?page=rwdp-settings&tab=contact' ),
+			'secondary_txt' => __( 'Contact Settings', 'rw-dealer-portal' ),
+			'alert'       => false,
+		],
+		[
+			'icon'        => 'dashicons-groups',
+			'title'       => __( 'Pending Registrations', 'rw-dealer-portal' ),
+			'count'       => absint( $pending_count ),
+			'count_label' => __( 'Pending', 'rw-dealer-portal' ),
+			'description' => __( 'Review and approve dealer account applications. Assign applicants to an existing dealer profile or create a new one.', 'rw-dealer-portal' ),
+			'primary_url' => admin_url( 'admin.php?page=rwdp-pending-registrations' ),
+			'primary_txt' => __( 'Review Applications', 'rw-dealer-portal' ),
+			'secondary_url' => admin_url( 'user-new.php' ),
+			'secondary_txt' => __( 'Add New User', 'rw-dealer-portal' ),
+			'alert'       => $pending_count > 0,
+		],
+	];
 	?>
-	<div class="wrap rwdp-admin-wrap">
-		<h1><?php esc_html_e( 'RW Dealer Portal', 'rw-dealer-portal' ); ?></h1>
+	<div class="wrap rwdp-overview-wrap">
+		<h1 class="rwdp-overview-heading">
+			<span class="dashicons dashicons-store" style="font-size:28px;width:28px;height:28px;margin-right:8px;vertical-align:middle;"></span>
+			<?php esc_html_e( 'Dealer Portal', 'rw-dealer-portal' ); ?>
+		</h1>
 
-		<div class="rwdp-stats-grid">
-			<div class="rwdp-stat-card">
-				<span class="rwdp-stat-number"><?php echo absint( $dealer_count ); ?></span>
-				<span class="rwdp-stat-label"><?php esc_html_e( 'Dealers', 'rw-dealer-portal' ); ?></span>
-				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=rw_dealer' ) ); ?>" class="rwdp-stat-link"><?php esc_html_e( 'Manage Dealers', 'rw-dealer-portal' ); ?></a>
+		<div class="rwdp-overview-grid">
+			<?php foreach ( $cards as $card ) : ?>
+			<div class="rwdp-overview-card<?php echo $card['alert'] ? ' rwdp-overview-card--alert' : ''; ?>">
+
+				<div class="rwdp-overview-card__header">
+					<div class="rwdp-overview-card__icon-title">
+						<span class="dashicons <?php echo esc_attr( $card['icon'] ); ?> rwdp-overview-card__icon"></span>
+						<span class="rwdp-overview-card__title"><?php echo esc_html( $card['title'] ); ?></span>
+					</div>
+					<span class="rwdp-overview-card__badge<?php echo $card['alert'] ? ' rwdp-overview-card__badge--alert' : ''; ?>">
+						<?php echo absint( $card['count'] ); ?> <?php echo esc_html( strtoupper( $card['count_label'] ) ); ?>
+					</span>
+				</div>
+
+				<div class="rwdp-overview-card__divider"></div>
+
+				<p class="rwdp-overview-card__desc"><?php echo esc_html( $card['description'] ); ?></p>
+
+				<div class="rwdp-overview-card__actions">
+					<a href="<?php echo esc_url( $card['primary_url'] ); ?>" class="rwdp-overview-btn rwdp-overview-btn--primary">
+						<?php echo esc_html( $card['primary_txt'] ); ?>
+					</a>
+					<a href="<?php echo esc_url( $card['secondary_url'] ); ?>" class="rwdp-overview-btn rwdp-overview-btn--secondary">
+						<?php echo esc_html( $card['secondary_txt'] ); ?>
+					</a>
+				</div>
+
 			</div>
-			<div class="rwdp-stat-card">
-				<span class="rwdp-stat-number"><?php echo absint( $asset_count ); ?></span>
-				<span class="rwdp-stat-label"><?php esc_html_e( 'Assets', 'rw-dealer-portal' ); ?></span>
-				<a href="<?php echo esc_url( admin_url( 'edit.php?post_type=rw_asset' ) ); ?>" class="rwdp-stat-link"><?php esc_html_e( 'Manage Assets', 'rw-dealer-portal' ); ?></a>
-			</div>
-			<div class="rwdp-stat-card">
-				<span class="rwdp-stat-number"><?php echo absint( $submission_count ); ?></span>
-				<span class="rwdp-stat-label"><?php esc_html_e( 'Submissions', 'rw-dealer-portal' ); ?></span>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=rwdp-submissions' ) ); ?>" class="rwdp-stat-link"><?php esc_html_e( 'View Submissions', 'rw-dealer-portal' ); ?></a>
-			</div>
-			<div class="rwdp-stat-card<?php echo $pending_count ? ' rwdp-stat-card--alert' : ''; ?>">
-				<span class="rwdp-stat-number"><?php echo absint( $pending_count ); ?></span>
-				<span class="rwdp-stat-label"><?php esc_html_e( 'Pending Registrations', 'rw-dealer-portal' ); ?></span>
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=rwdp-pending-registrations' ) ); ?>" class="rwdp-stat-link"><?php esc_html_e( 'Review', 'rw-dealer-portal' ); ?></a>
-			</div>
+			<?php endforeach; ?>
 		</div>
 
-		<div class="rwdp-quick-actions">
-			<h2><?php esc_html_e( 'Quick Actions', 'rw-dealer-portal' ); ?></h2>
-			<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=rw_dealer' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Add New Dealer', 'rw-dealer-portal' ); ?></a>
-			<a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=rw_asset' ) ); ?>" class="button button-primary"><?php esc_html_e( 'Add New Asset', 'rw-dealer-portal' ); ?></a>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=rwdp-settings' ) ); ?>" class="button"><?php esc_html_e( 'Settings', 'rw-dealer-portal' ); ?></a>
+		<div class="rwdp-overview-footer">
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=rwdp-settings' ) ); ?>" class="rwdp-overview-settings-link">
+				<span class="dashicons dashicons-admin-settings"></span>
+				<?php esc_html_e( 'Portal Settings', 'rw-dealer-portal' ); ?>
+			</a>
+			<a href="<?php echo esc_url( admin_url( 'edit-tags.php?taxonomy=rw_dealer_type&post_type=rw_dealer' ) ); ?>" class="rwdp-overview-settings-link">
+				<span class="dashicons dashicons-tag"></span>
+				<?php esc_html_e( 'Dealer Types', 'rw-dealer-portal' ); ?>
+			</a>
 		</div>
 	</div>
 	<?php

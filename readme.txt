@@ -4,7 +4,7 @@ Tags: dealer, dealer finder, dealer portal, dealer locator, elementor
 Requires at least: 6.5
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.0.8
+Stable tag: 1.0.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -62,6 +62,19 @@ Use the **Lock to Dealer Type** control on the Dealer Search Bar widget and ente
 4. Plugin settings screen (Google Maps API key, page assignments).
 
 == Changelog ==
+
+= 1.0.9 =
+* Added: Seven Elementor Dynamic Tags for dealer fields — Address, Phone, Website, Email, Hours, Logo, and Directions Link — usable in any Elementor template on `rw_dealer` posts.
+* Added: Website field normalises on save — if no URL scheme is present, `https://` is prepended automatically before storage.
+* Added: `show_website` toggle to the Dealer Results List widget with dedicated typography, colour, and padding style controls.
+* Added: Website field displayed in map popup info windows and result cards (scheme stripped for clean display).
+* Added: Google Maps API setup instructions added to the Maps API Keys settings tab as a collapsible details block.
+* Added: Portal Overview admin dashboard redesigned — four metric cards (Dealers, Assets, Form Submissions, Pending Registrations) with counts, descriptions, and action buttons.
+* Changed: Filter dropdowns no longer require the "Enable Filter Dropdowns" master toggle — dropdowns appear automatically when ACF fields are checked in Dealer Project Relation settings.
+* Fixed: Info window logo `src` attribute was not attribute-escaped (XSS).
+* Fixed: Info window directions text was not HTML-escaped before DOM insertion.
+* Fixed: `RWDP_Tag_Website` dynamic tag removed `URL_CATEGORY` — `render()` outputs the scheme-stripped display string which would have produced a broken relative URL in Elementor URL fields.
+* Fixed: `RWDP_Tag_Logo` now returns an empty array instead of `['url' => false]` when the attachment has been deleted from the media library.
 
 = 1.0.8 =
 * Added: Image Resolution controls for thumbnail and logo in the Dealer Results List widget Content tab.

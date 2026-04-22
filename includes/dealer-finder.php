@@ -65,25 +65,75 @@ function rwdp_enqueue_dealer_finder_assets() {
 /**
  * Return the active dealer finder filter settings with safe defaults.
  *
- * @return array{enabled:bool,mode:string,acf_field:string}
+ * @return array{enabled:bool,active_fields:array<string>,filter_logic:string,acf_field:string}
  */
 function rwdp_get_dealer_filter_settings() {
 	$settings = get_option( 'rwdp_settings', [] );
 
-	$mode = sanitize_key( $settings['filter_source_mode'] ?? 'acf_relationship_field' );
-	if ( 'acf_taxonomy_field' === $mode || 'native_taxonomy' === $mode ) {
-		$mode = 'acf_relationship_field';
+	$active_fields = $settings['active_filter_fields'] ?? [];
+	if ( ! is_array( $active_fields ) ) {
+		$active_fields = [];
 	}
-	if ( 'acf_relationship_field' !== $mode ) {
-		$mode = 'acf_relationship_field';
+	$active_fields = array_values( array_filter( array_map( 'sanitize_key', $active_fields ) ) );
+
+	// Backward compat: migrate old single-field setting if new array is empty.
+	if ( empty( $active_fields ) ) {
+		$legacy = sanitize_key( $settings['filter_acf_field_name'] ?? '' );
+		if ( $legacy ) {
+			$active_fields = [ $legacy ];
+		}
+	}
+
+	$filter_logic = sanitize_key( $settings['filter_logic'] ?? 'and' );
+	if ( ! in_array( $filter_logic, [ 'and', 'or' ], true ) ) {
+		$filter_logic = 'and';
 	}
 
 	return [
-		'enabled'   => ! empty( $settings['enable_type_dropdown'] ),
-		'mode'      => $mode,
-		'acf_field' => sanitize_key( $settings['filter_acf_field_name'] ?? '' ),
+		'active_fields' => $active_fields,
+		'filter_logic'  => $filter_logic,
+		'acf_field'     => ! empty( $active_fields ) ? $active_fields[0] : '',
 	];
 }
+
+/**
+ * Auto-detect all ACF Relationship/Post Object fields on the rw_dealer post type.
+ * Results are cached for one hour and busted on ACF field group updates.
+ *
+ * @return array<int, array{key:string,label:string,type:string}>
+ */
+function rwdp_detect_acf_relationship_fields() {
+	$cached = get_transient( 'rwdp_acf_rel_fields' );
+	if ( false !== $cached ) {
+		return $cached;
+	}
+
+	$fields = [];
+	if ( function_exists( 'acf_get_field_groups' ) && function_exists( 'acf_get_fields' ) ) {
+		$groups = acf_get_field_groups( [ 'post_type' => 'rw_dealer' ] );
+		foreach ( $groups as $group ) {
+			$group_fields = acf_get_fields( $group['key'] );
+			if ( ! is_array( $group_fields ) ) {
+				continue;
+			}
+			foreach ( $group_fields as $field ) {
+				if ( in_array( $field['type'] ?? '', [ 'relationship', 'post_object' ], true ) ) {
+					$fields[] = [
+						'key'   => sanitize_key( $field['name'] ),
+						'label' => sanitize_text_field( $field['label'] ),
+						'type'  => $field['type'],
+					];
+				}
+			}
+		}
+	}
+
+	set_transient( 'rwdp_acf_rel_fields', $fields, HOUR_IN_SECONDS );
+	return $fields;
+}
+add_action( 'acf/update_field_group', function() {
+	delete_transient( 'rwdp_acf_rel_fields' );
+} );
 
 /**
  * Normalize possible ACF relationship/post object values to post IDs.
@@ -137,6 +187,12 @@ function rwdp_get_relationship_filter_options( $field_name ) {
 		return [];
 	}
 
+	$transient_key = 'rwdp_filter_opts_' . sanitize_key( $field_name );
+	$cached = get_transient( $transient_key );
+	if ( false !== $cached ) {
+		return $cached;
+	}
+
 	$dealers = get_posts( [
 		'post_type'      => 'rw_dealer',
 		'post_status'    => 'publish',
@@ -187,54 +243,150 @@ function rwdp_get_relationship_filter_options( $field_name ) {
 		];
 	}
 
+	set_transient( $transient_key, $options, HOUR_IN_SECONDS );
+
 	return $options;
 }
 
 /**
  * Resolve a locked shortcode filter value to relationship post ID.
+ * Supports optional "field_key:value" syntax to target a specific field;
+ * otherwise searches all provided option sets.
  *
- * @param string $locked_value
- * @param array<int, array{id:int,label:string,slug:string}> $options
- * @return int
+ * @param string $locked_value Raw value from shortcode attribute.
+ * @param array<string, array<int, array{id:int,label:string,slug:string}>> $all_options Keyed by field key.
+ * @return array{field:string,id:int} Matching field key and post ID, or field='' and id=0.
  */
-function rwdp_resolve_locked_relationship_id( $locked_value, $options ) {
+function rwdp_resolve_locked_relationship_id( $locked_value, $all_options ) {
 	$locked_value = trim( (string) $locked_value );
 	if ( '' === $locked_value ) {
-		return 0;
+		return [ 'field' => '', 'id' => 0 ];
 	}
 
-	if ( ctype_digit( $locked_value ) ) {
-		return absint( $locked_value );
-	}
-
-	$needle = strtolower( $locked_value );
-	foreach ( $options as $option ) {
-		if ( strtolower( (string) $option['slug'] ) === $needle || strtolower( (string) $option['label'] ) === $needle ) {
-			return absint( $option['id'] );
+	// Support "field_key:value" explicit targeting.
+	$search_fields = $all_options;
+	if ( strpos( $locked_value, ':' ) !== false ) {
+		[ $explicit_key, $locked_value ] = explode( ':', $locked_value, 2 );
+		$explicit_key = sanitize_key( $explicit_key );
+		if ( isset( $all_options[ $explicit_key ] ) ) {
+			$search_fields = [ $explicit_key => $all_options[ $explicit_key ] ];
 		}
 	}
 
-	return 0;
+	$needle = strtolower( $locked_value );
+	foreach ( $search_fields as $field_key => $options ) {
+		if ( ctype_digit( $locked_value ) ) {
+			$candidate_id = absint( $locked_value );
+			foreach ( $options as $option ) {
+				if ( absint( $option['id'] ) === $candidate_id ) {
+					return [ 'field' => $field_key, 'id' => $candidate_id ];
+				}
+			}
+		}
+		foreach ( $options as $option ) {
+			if ( strtolower( (string) $option['slug'] ) === $needle || strtolower( (string) $option['label'] ) === $needle ) {
+				return [ 'field' => $field_key, 'id' => absint( $option['id'] ) ];
+			}
+		}
+	}
+
+	return [ 'field' => '', 'id' => 0 ];
+}
+
+/**
+ * Render filter dropdown controls (ACF relationship fields + taxonomy).
+ * Used by both the shortcode and the Elementor Search widget so rendering
+ * is always in sync.
+ *
+ * @param array  $active_fields     Array of ACF field keys to expose as dropdowns.
+ * @param string $filter_logic      'and' or 'or'.
+ * @param string $locked_type_slug  When non-empty, no dropdowns are rendered (locked mode).
+ * @return string HTML string.
+ */
+function rwdp_render_filter_dropdowns( $active_fields, $filter_logic, $locked_type_slug ) {
+	if ( $locked_type_slug ) {
+		return '';
+	}
+
+	ob_start();
+
+	// One dropdown per active ACF field.
+	foreach ( $active_fields as $field_key ) {
+		$options = rwdp_get_relationship_filter_options( $field_key );
+		if ( empty( $options ) ) {
+			continue;
+		}
+
+		// Get the human-readable label from ACF field detection.
+		$field_label = '';
+		$detected    = rwdp_detect_acf_relationship_fields();
+		foreach ( $detected as $df ) {
+			if ( $df['key'] === $field_key ) {
+				$field_label = $df['label'];
+				break;
+			}
+		}
+		if ( ! $field_label ) {
+			$field_label = ucwords( str_replace( [ '_', '-' ], ' ', $field_key ) );
+		}
+
+		$select_id = 'rwdp-filter-' . esc_attr( $field_key );
+		?>
+		<div class="rwdp-finder__type-filter">
+			<label for="<?php echo esc_attr( $select_id ); ?>"><?php echo esc_html( $field_label ) . ':'; ?></label>
+			<select id="<?php echo esc_attr( $select_id ); ?>"
+			        class="rwdp-acf-filter"
+			        data-field-key="<?php echo esc_attr( $field_key ); ?>">
+				<option value=""><?php
+					/* translators: %s: filter label */
+					printf( esc_html__( 'All %s', 'rw-dealer-portal' ), esc_html( $field_label ) );
+				?></option>
+				<?php foreach ( $options as $option ) : ?>
+					<option value="<?php echo absint( $option['id'] ); ?>">
+						<?php echo esc_html( $option['label'] ); ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
+		</div>
+		<?php
+	}
+
+	// Taxonomy dropdown.
+	$taxonomy_options = get_terms( [ 'taxonomy' => 'rw_dealer_type', 'hide_empty' => true ] );
+	if ( $taxonomy_options && ! is_wp_error( $taxonomy_options ) ) {
+		?>
+		<div class="rwdp-finder__type-filter">
+			<label for="rwdp-tax-filter"><?php esc_html_e( 'Dealer Type:', 'rw-dealer-portal' ); ?></label>
+			<select id="rwdp-tax-filter">
+				<option value=""><?php esc_html_e( 'All Dealer Types', 'rw-dealer-portal' ); ?></option>
+				<?php foreach ( $taxonomy_options as $type_term ) : ?>
+					<option value="<?php echo absint( $type_term->term_id ); ?>">
+						<?php echo esc_html( $type_term->name ); ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
+		</div>
+		<?php
+	}
+
+	return (string) ob_get_clean();
 }
 
 function rwdp_dealer_finder_shortcode( $atts ) {
 	$atts = shortcode_atts( [
-		'dealer_type' => '',  // optionally limit to a specific dealer type slug in active taxonomy
+		'dealer_type' => '',  // optionally lock to a specific type (bare slug/id, or field_key:value)
 	], $atts, 'rwdp_dealer_finder' );
 
-	$settings = get_option( 'rwdp_settings', [] );
-	$form_id  = absint( $settings['contact_form_id'] ?? 0 );
-	$filter_settings = rwdp_get_dealer_filter_settings();
-	$filter_options  = rwdp_get_relationship_filter_options( $filter_settings['acf_field'] );
-	$taxonomy_options = get_terms( [ 'taxonomy' => 'rw_dealer_type', 'hide_empty' => true ] );
-
-	// Store the raw dealer_type value for AJAX to resolve server-side.
+	$settings         = get_option( 'rwdp_settings', [] );
+	$form_id          = absint( $settings['contact_form_id'] ?? 0 );
+	$filter_settings  = rwdp_get_dealer_filter_settings();
 	$locked_type_slug = sanitize_text_field( $atts['dealer_type'] );
 
 	ob_start();
 	?>
 	<div class="rwdp-dealer-finder" id="rwdp-dealer-finder"
-	     data-locked-type="<?php echo esc_attr( $locked_type_slug ); ?>">
+	     data-locked-type="<?php echo esc_attr( $locked_type_slug ); ?>"
+	     data-filter-logic="<?php echo esc_attr( $filter_settings['filter_logic'] ); ?>">
 		<div class="rwdp-finder__controls">
 			<div class="rwdp-finder__search">
 				<label for="rwdp-location-search" class="screen-reader-text"><?php esc_html_e( 'Search by ZIP or city', 'rw-dealer-portal' ); ?></label>
@@ -261,38 +413,13 @@ function rwdp_dealer_finder_shortcode( $atts ) {
 				</select>
 			</div>
 
-	<?php if ( ! $locked_type_slug && $filter_settings['enabled'] ) :
-				if ( ! empty( $filter_options ) ) :
+			<?php
+			echo rwdp_render_filter_dropdowns(
+				$filter_settings['active_fields'],
+				$filter_settings['filter_logic'],
+				$locked_type_slug
+			);
 			?>
-			<div class="rwdp-finder__type-filter">
-				<label for="rwdp-related-filter"><?php esc_html_e( 'Dealer Project Type:', 'rw-dealer-portal' ); ?></label>
-				<select id="rwdp-related-filter">
-					<option value=""><?php esc_html_e( 'All Project Types', 'rw-dealer-portal' ); ?></option>
-					<?php foreach ( $filter_options as $option ) : ?>
-						<option value="<?php echo absint( $option['id'] ); ?>">
-							<?php echo esc_html( $option['label'] ); ?>
-						</option>
-					<?php endforeach; ?>
-				</select>
-			</div>
-			<?php endif; // $filter_options
-
-				if ( $taxonomy_options && ! is_wp_error( $taxonomy_options ) ) :
-			?>
-			<div class="rwdp-finder__type-filter">
-				<label for="rwdp-tax-filter"><?php esc_html_e( 'Dealer Type:', 'rw-dealer-portal' ); ?></label>
-				<select id="rwdp-tax-filter">
-					<option value=""><?php esc_html_e( 'All Dealer Types', 'rw-dealer-portal' ); ?></option>
-					<?php foreach ( $taxonomy_options as $type_term ) : ?>
-						<option value="<?php echo absint( $type_term->term_id ); ?>">
-							<?php echo esc_html( $type_term->name ); ?>
-						</option>
-					<?php endforeach; ?>
-				</select>
-			</div>
-			<?php endif; // $taxonomy_options
-		endif; // ! $locked_type_slug
-		?>
 		</div>
 
 		<div class="rwdp-finder__layout">
@@ -320,7 +447,7 @@ function rwdp_dealer_finder_shortcode( $atts ) {
 
 	<?php if ( empty( $settings['google_maps_api_key'] ) ) : ?>
 	<p class="rwdp-notice rwdp-notice--warning">
-		<?php esc_html_e( 'Google Maps API key is not configured. Please add it in Dealer Portal → Settings.', 'rw-dealer-portal' ); ?>
+		<?php esc_html_e( 'Google Maps API key is not configured. Please add it in Dealer Portal â Settings.', 'rw-dealer-portal' ); ?>
 	</p>
 	<?php endif; ?>
 	<?php
@@ -338,10 +465,8 @@ function rwdp_ajax_get_dealers() {
 	check_ajax_referer( 'rwdp_dealer_finder', 'nonce' );
 
 	$filter_settings = rwdp_get_dealer_filter_settings();
-	$field_name      = $filter_settings['acf_field'];
-	$filter_options  = rwdp_get_relationship_filter_options( $field_name );
-	$type_filter     = 0;
-	$taxonomy_filter = 0;
+	$active_fields   = $filter_settings['active_fields'];
+	$filter_logic    = $filter_settings['filter_logic'];
 
 	$allowed_sizes      = array_merge( [ 'full' ], array_keys( wp_get_registered_image_subsizes() ) );
 	$raw_thumb_size     = sanitize_key( wp_unslash( $_POST['thumbnail_image_size'] ?? 'large' ) );
@@ -349,122 +474,196 @@ function rwdp_ajax_get_dealers() {
 	$thumbnail_img_size = in_array( $raw_thumb_size, $allowed_sizes, true ) ? $raw_thumb_size : 'large';
 	$logo_img_size      = in_array( $raw_logo_size,  $allowed_sizes, true ) ? $raw_logo_size  : 'large';
 
-	// If a locked value was sent from shortcode, resolve it to a related post ID
-	// (try numeric ID first, then slug/name from available filter options).
+	// --- Resolve active filter selections ---
+
+	// acf_filters: JSON object of { field_key: selected_post_id } from JS.
+	// Validate every key against the admin-configured active fields (security).
+	$raw_acf_filters = json_decode( wp_unslash( $_POST['acf_filters'] ?? '{}' ), true );
+	$acf_filters = [];  // [ field_key => post_id ]
+	if ( is_array( $raw_acf_filters ) ) {
+		foreach ( $raw_acf_filters as $key => $val ) {
+			$key = sanitize_key( $key );
+			if ( in_array( $key, $active_fields, true ) && absint( $val ) > 0 ) {
+				$acf_filters[ $key ] = absint( $val );
+			}
+		}
+	}
+
+	$taxonomy_filter = absint( wp_unslash( $_POST['tax_type_id'] ?? 0 ) );
+
+	// Locked type: resolve to { field, id } across all active fields.
 	$locked_type_slug = sanitize_text_field( wp_unslash( $_POST['locked_type'] ?? '' ) );
-	if ( $locked_type_slug && $field_name ) {
-		$type_filter = rwdp_resolve_locked_relationship_id( $locked_type_slug, $filter_options );
-	} elseif ( $filter_settings['enabled'] && $field_name ) {
-		// Dropdown-based filter (regular shortcode, no locked type).
-		$type_filter = absint( $_POST['type_id'] ?? 0 );
+	if ( $locked_type_slug && ! empty( $active_fields ) ) {
+		$all_options = [];
+		foreach ( $active_fields as $fk ) {
+			$all_options[ $fk ] = rwdp_get_relationship_filter_options( $fk );
+		}
+		$resolved = rwdp_resolve_locked_relationship_id( $locked_type_slug, $all_options );
+		if ( $resolved['id'] && $resolved['field'] ) {
+			$acf_filters[ $resolved['field'] ] = $resolved['id'];
+		}
 	}
 
-	if ( $filter_settings['enabled'] ) {
-		$taxonomy_filter = absint( $_POST['tax_type_id'] ?? 0 );
-	}
+	// --- Build query / queries ---
 
-	$args = [
+	$base_query = [
 		'post_type'      => 'rw_dealer',
 		'post_status'    => 'publish',
 		'posts_per_page' => -1,
 		'orderby'        => 'title',
 		'order'          => 'ASC',
-		'meta_query'     => [ [
+		'fields'         => 'ids',
+	];
+
+	$has_acf_filter = ! empty( $acf_filters );
+	$has_tax_filter = $taxonomy_filter > 0;
+
+	if ( ! $has_acf_filter && ! $has_tax_filter ) {
+		// No filters selected â return all dealers with valid addresses.
+		$base_query['meta_query'] = [ [
 			'key'     => '_rwdp_address_valid',
 			'value'   => '1',
 			'compare' => '=',
-		] ],
-	];
-
-	if ( $type_filter && $field_name ) {
-		$args['meta_query'][] = [
-			'key'     => $field_name,
-			'value'   => '"' . $type_filter . '"',
-			'compare' => 'LIKE',
-		];
-	}
-
-	if ( $taxonomy_filter ) {
-		$args['tax_query'] = [ [
-			'taxonomy' => 'rw_dealer_type',
-			'field'    => 'term_id',
-			'terms'    => $taxonomy_filter,
 		] ];
+		$dealer_ids = get_posts( $base_query );
+
+	} elseif ( 'or' === $filter_logic ) {
+		// OR: run one query per active filter, union all results.
+		$union_ids = [];
+
+		foreach ( $acf_filters as $field_key => $post_id ) {
+			$q = $base_query;
+			$q['meta_query'] = [
+				'relation' => 'AND',
+				[
+					'key'     => '_rwdp_address_valid',
+					'value'   => '1',
+					'compare' => '=',
+				],
+				[
+					'key'     => $field_key,
+					'value'   => '"' . $post_id . '"',
+					'compare' => 'LIKE',
+				],
+			];
+			$union_ids = array_merge( $union_ids, get_posts( $q ) );
+		}
+
+		if ( $has_tax_filter ) {
+			$q = $base_query;
+			$q['meta_query'] = [ [
+				'key'     => '_rwdp_address_valid',
+				'value'   => '1',
+				'compare' => '=',
+			] ];
+			$q['tax_query'] = [ [
+				'taxonomy' => 'rw_dealer_type',
+				'field'    => 'term_id',
+				'terms'    => $taxonomy_filter,
+			] ];
+			$union_ids = array_merge( $union_ids, get_posts( $q ) );
+		}
+
+		$dealer_ids = array_values( array_unique( $union_ids ) );
+		// Re-sort alphabetically by requerying the unioned IDs.
+		if ( ! empty( $dealer_ids ) ) {
+			$dealer_ids = get_posts( array_merge( $base_query, [
+				'post__in'   => $dealer_ids,
+				'meta_query' => [],  // already validated above
+			] ) );
+		}
+
+	} else {
+		// AND: single WP_Query, all conditions must match.
+		$meta_clauses = [
+			'relation' => 'AND',
+			[
+				'key'     => '_rwdp_address_valid',
+				'value'   => '1',
+				'compare' => '=',
+			],
+		];
+		foreach ( $acf_filters as $field_key => $post_id ) {
+			$meta_clauses[] = [
+				'key'     => $field_key,
+				'value'   => '"' . $post_id . '"',
+				'compare' => 'LIKE',
+			];
+		}
+		$q = $base_query;
+		$q['meta_query'] = $meta_clauses;
+		if ( $has_tax_filter ) {
+			$q['tax_query'] = [ [
+				'taxonomy' => 'rw_dealer_type',
+				'field'    => 'term_id',
+				'terms'    => $taxonomy_filter,
+			] ];
+		}
+		$dealer_ids = get_posts( $q );
 	}
 
-	$dealers = get_posts( $args );
-	$data    = [];
+	// --- Build response data ---
 
+	$dealers = empty( $dealer_ids ) ? [] : get_posts( [
+		'post_type'      => 'rw_dealer',
+		'post_status'    => 'publish',
+		'posts_per_page' => -1,
+		'post__in'       => $dealer_ids,
+		'orderby'        => 'post__in',
+	] );
+
+	$data = [];
 	foreach ( $dealers as $dealer ) {
 		$lat      = (float) get_post_meta( $dealer->ID, '_rwdp_lat',          true );
 		$lng      = (float) get_post_meta( $dealer->ID, '_rwdp_lng',          true );
 		$logo_id  = get_post_meta( $dealer->ID, '_rwdp_logo_id', true );
 		$feat_img = get_the_post_thumbnail_url( $dealer->ID, $thumbnail_img_size );
+		$city     = get_post_meta( $dealer->ID, '_rwdp_city',    true );
+		$state    = get_post_meta( $dealer->ID, '_rwdp_state',   true );
+		$zip      = get_post_meta( $dealer->ID, '_rwdp_zip',     true );
 
-		// Build address string for info window
-		$city  = get_post_meta( $dealer->ID, '_rwdp_city',    true );
-		$state = get_post_meta( $dealer->ID, '_rwdp_state',   true );
-		$zip   = get_post_meta( $dealer->ID, '_rwdp_zip',     true );
-
+		// Collect all ACF relationship IDs per active field.
 		$type_ids = [];
-		$taxonomy_type_ids = [];
-		if ( $field_name ) {
+		foreach ( $active_fields as $fk ) {
 			$field_value = null;
 			if ( function_exists( 'get_field' ) ) {
-				$field_value = get_field( $field_name, $dealer->ID, false );
+				$field_value = get_field( $fk, $dealer->ID, false );
 				if ( empty( $field_value ) ) {
-					$field_value = get_field( $field_name, $dealer->ID, true );
+					$field_value = get_field( $fk, $dealer->ID, true );
 				}
 			}
 			if ( empty( $field_value ) ) {
-				$field_value = get_post_meta( $dealer->ID, $field_name, true );
+				$field_value = get_post_meta( $dealer->ID, $fk, true );
 			}
-			$type_ids = rwdp_normalize_related_post_ids( $field_value );
+			$type_ids = array_merge( $type_ids, rwdp_normalize_related_post_ids( $field_value ) );
 		}
+		$type_ids = array_values( array_unique( array_map( 'absint', $type_ids ) ) );
 
-		$taxonomy_terms = get_the_terms( $dealer->ID, 'rw_dealer_type' );
-		if ( $taxonomy_terms && ! is_wp_error( $taxonomy_terms ) ) {
-			$taxonomy_type_ids = array_map( 'absint', wp_list_pluck( $taxonomy_terms, 'term_id' ) );
-		}
+		$taxonomy_terms    = get_the_terms( $dealer->ID, 'rw_dealer_type' );
+		$taxonomy_type_ids = ( $taxonomy_terms && ! is_wp_error( $taxonomy_terms ) )
+			? array_map( 'absint', wp_list_pluck( $taxonomy_terms, 'term_id' ) )
+			: [];
 
 		$data[] = [
-			'id'         => $dealer->ID,
-			'title'      => $dealer->post_title,
-			'lat'        => $lat,
-			'lng'        => $lng,
-			'phone'      => get_post_meta( $dealer->ID, '_rwdp_phone',        true ),
-			'website'    => get_post_meta( $dealer->ID, '_rwdp_website',      true ),
-			'email'      => get_post_meta( $dealer->ID, '_rwdp_public_email', true ),
-			'address'    => get_post_meta( $dealer->ID, '_rwdp_address',      true ),
-			'city'       => $city,
-			'state'      => $state,
-			'zip'        => $zip,
-			'hours'      => get_post_meta( $dealer->ID, '_rwdp_hours',        true ),
-			'logo_url'   => $logo_id ? wp_get_attachment_image_url( $logo_id, $logo_img_size ) : '',
-			'feat_img'   => $feat_img ?: '',
-			'permalink'  => get_permalink( $dealer->ID ),
-			'type_ids'   => array_map( 'absint', $type_ids ),
+			'id'               => $dealer->ID,
+			'title'            => $dealer->post_title,
+			'lat'              => $lat,
+			'lng'              => $lng,
+			'phone'            => get_post_meta( $dealer->ID, '_rwdp_phone',        true ),
+			'website'          => get_post_meta( $dealer->ID, '_rwdp_website',      true ),
+			'email'            => get_post_meta( $dealer->ID, '_rwdp_public_email', true ),
+			'address'          => get_post_meta( $dealer->ID, '_rwdp_address',      true ),
+			'city'             => $city,
+			'state'            => $state,
+			'zip'              => $zip,
+			'hours'            => get_post_meta( $dealer->ID, '_rwdp_hours',        true ),
+			'logo_url'         => $logo_id ? wp_get_attachment_image_url( $logo_id, $logo_img_size ) : '',
+			'feat_img'         => $feat_img ?: '',
+			'permalink'        => get_permalink( $dealer->ID ),
+			'type_ids'         => $type_ids,
 			'taxonomy_type_ids' => $taxonomy_type_ids,
 		];
 	}
 
 	wp_send_json_success( [ 'dealers' => $data ] );
-}
-
-/**
- * AJAX: Retrieve contact email for a dealer (nonce-protected, used to pre-fill hidden fields).
- */
-add_action( 'wp_ajax_rwdp_get_dealer_contact_email',        'rwdp_ajax_get_dealer_contact_email' );
-add_action( 'wp_ajax_nopriv_rwdp_get_dealer_contact_email', 'rwdp_ajax_get_dealer_contact_email' );
-
-function rwdp_ajax_get_dealer_contact_email() {
-	check_ajax_referer( 'rwdp_dealer_finder', 'nonce' );
-
-	$dealer_id = absint( $_POST['dealer_id'] ?? 0 );
-	if ( ! $dealer_id || get_post_type( $dealer_id ) !== 'rw_dealer' ) {
-		wp_send_json_error();
-	}
-
-	$contact_emails = get_post_meta( $dealer_id, '_rwdp_contact_emails', true );
-	wp_send_json_success( [ 'emails' => sanitize_text_field( $contact_emails ) ] );
 }

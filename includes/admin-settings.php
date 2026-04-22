@@ -28,12 +28,15 @@ function rwdp_sanitize_settings( $raw ) {
 	$clean['contact_form_id']       = absint( $raw['contact_form_id'] ?? 0 );
 	$clean['login_page_id']         = absint( $raw['login_page_id'] ?? 0 );
 	$clean['dashboard_page_id']     = absint( $raw['dashboard_page_id'] ?? 0 );
-	$clean['enable_type_dropdown']  = ! empty( $raw['enable_type_dropdown'] ) ? 1 : 0;
 
-	$mode = sanitize_key( $raw['filter_source_mode'] ?? 'acf_relationship_field' );
-	$clean['filter_source_mode'] = 'acf_relationship_field' === $mode ? $mode : 'acf_relationship_field';
+	$raw_fields = $raw['active_filter_fields'] ?? [];
+	if ( ! is_array( $raw_fields ) ) {
+		$raw_fields = [];
+	}
+	$clean['active_filter_fields'] = array_values( array_filter( array_map( 'sanitize_key', $raw_fields ) ) );
 
-	$clean['filter_acf_field_name'] = sanitize_key( $raw['filter_acf_field_name'] ?? '' );
+	$raw_logic = sanitize_key( $raw['filter_logic'] ?? 'and' );
+	$clean['filter_logic'] = in_array( $raw_logic, [ 'and', 'or' ], true ) ? $raw_logic : 'and';
 
 	// Array of page IDs to restrict to logged-in portal users
 	$raw_ids = $raw['restricted_page_ids'] ?? [];
@@ -60,9 +63,12 @@ function rwdp_admin_settings_page() {
 	$login_page_id     = $settings['login_page_id'] ?? 0;
 	$dashboard_page_id = $settings['dashboard_page_id'] ?? 0;
 	$restricted_ids    = $settings['restricted_page_ids'] ?? [];
-	$enable_dropdown   = ! empty( $settings['enable_type_dropdown'] );
-	$filter_mode       = $settings['filter_source_mode'] ?? 'acf_relationship_field';
-	$acf_field_name    = $settings['filter_acf_field_name'] ?? '';
+	$active_filter_fields = $settings['active_filter_fields'] ?? [];
+	if ( ! is_array( $active_filter_fields ) ) {
+		$active_filter_fields = [];
+	}
+	$filter_logic         = $settings['filter_logic'] ?? 'and';
+	$detected_acf_fields  = rwdp_detect_acf_relationship_fields();
 
 	// Fluent Forms list
 	$ff_forms = [];
@@ -88,74 +94,11 @@ function rwdp_admin_settings_page() {
 		'dealer_finder' => __( 'Dealer Project Relation', 'rw-dealer-portal' ),
 	];
 
-	$acf_mode_warning = '';
-	$acf_mode_info    = '';
-	$acf_mode_diagnostic = '';
-	if ( 'dealer_finder' === $current_tab && $enable_dropdown && 'acf_relationship_field' === $filter_mode ) {
-		$valid_field = false;
-		if ( $acf_field_name && function_exists( 'get_field_object' ) ) {
-			$sample_ids = get_posts( [
-				'post_type'      => 'rw_dealer',
-				'post_status'    => 'publish',
-				'posts_per_page' => 1,
-				'fields'         => 'ids',
-			] );
-			$sample_id = ! empty( $sample_ids ) ? (int) $sample_ids[0] : 0;
-			if ( $sample_id ) {
-				$field = get_field_object( $acf_field_name, $sample_id, false, false );
-				$valid_field = is_array( $field ) && in_array( (string) ( $field['type'] ?? '' ), [ 'relationship', 'post_object' ], true );
-			} else {
-				$valid_field = true;
-			}
-		} elseif ( $acf_field_name ) {
-			$valid_field = true;
-		}
-
-		if ( ! $acf_field_name ) {
-			$acf_mode_warning = __( 'Relationship mode is enabled, but no ACF Relationship Field Name is set. Dealer Finder cannot build dropdown options until a field is provided.', 'rw-dealer-portal' );
-		} elseif ( ! $valid_field ) {
-			$acf_mode_warning = __( 'Relationship mode is enabled, but the configured field does not appear to be an ACF Relationship/Post Object field on rw_dealer.', 'rw-dealer-portal' );
-		} else {
-			$option_count = 0;
-			if ( function_exists( 'rwdp_get_relationship_filter_options' ) ) {
-				$option_count = count( rwdp_get_relationship_filter_options( $acf_field_name ) );
-			}
-
-			$acf_mode_info = sprintf(
-				/* translators: %s: field name */
-				__( 'Relationship mode configured successfully. Dealer Finder will use ACF field: %s.', 'rw-dealer-portal' ),
-				$acf_field_name
-			);
-
-			$acf_mode_diagnostic = sprintf(
-				/* translators: 1: detected option count, 2: field name */
-				__( 'Diagnostic: %1$d filter option(s) detected from field "%2$s" across published dealers.', 'rw-dealer-portal' ),
-				absint( $option_count ),
-				$acf_field_name
-			);
-		}
-	}
-
 	?>
 	<div class="wrap rwdp-admin-wrap">
 		<h1><?php esc_html_e( 'Dealer Portal Settings', 'rw-dealer-portal' ); ?></h1>
 
 		<?php settings_errors( 'rwdp_settings_group' ); ?>
-
-		<?php if ( $acf_mode_warning ) : ?>
-			<div class="notice notice-warning">
-				<p><?php echo esc_html( $acf_mode_warning ); ?></p>
-			</div>
-		<?php endif; ?>
-
-		<?php if ( $acf_mode_info ) : ?>
-			<div class="notice notice-info">
-				<p><?php echo esc_html( $acf_mode_info ); ?></p>
-				<?php if ( $acf_mode_diagnostic ) : ?>
-					<p><strong><?php echo esc_html( $acf_mode_diagnostic ); ?></strong></p>
-				<?php endif; ?>
-			</div>
-		<?php endif; ?>
 
 		<div class="rwdp-settings-layout">
 
@@ -205,14 +148,54 @@ function rwdp_admin_settings_page() {
 					endif; ?>
 
 					<?php if ( 'dealer_finder' !== $current_tab ) : ?>
-						<input type="hidden" name="rwdp_settings[enable_type_dropdown]" value="<?php echo $enable_dropdown ? '1' : '0'; ?>" />
-						<input type="hidden" name="rwdp_settings[filter_source_mode]" value="<?php echo esc_attr( $filter_mode ); ?>" />
-						<input type="hidden" name="rwdp_settings[filter_acf_field_name]" value="<?php echo esc_attr( $acf_field_name ); ?>" />
+
+						<?php foreach ( $active_filter_fields as $field_key ) : ?>
+							<input type="hidden" name="rwdp_settings[active_filter_fields][]" value="<?php echo esc_attr( $field_key ); ?>" />
+						<?php endforeach; ?>
+						<input type="hidden" name="rwdp_settings[filter_logic]" value="<?php echo esc_attr( $filter_logic ); ?>" />
 					<?php endif; ?>
 
 					<table class="form-table" role="presentation">
 
 						<?php if ( 'maps' === $current_tab ) : ?>
+
+							<tr>
+								<th scope="row"><?php esc_html_e( 'Setup Instructions', 'rw-dealer-portal' ); ?></th>
+								<td>
+									<details>
+										<summary style="cursor:pointer; font-weight:600;"><?php esc_html_e( 'Create Maps API Keys', 'rw-dealer-portal' ); ?></summary>
+										<ol style="margin-top:10px; line-height:1.8;">
+											<li><?php esc_html_e( 'Sign into the client\'s Google Account then go to', 'rw-dealer-portal' ); ?> <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer">console.cloud.google.com</a>. <?php esc_html_e( 'Create a new project if needed.', 'rw-dealer-portal' ); ?></li>
+											<li>
+												<?php esc_html_e( 'Go to APIs &amp; Services → Enable APIs and services — enable the following:', 'rw-dealer-portal' ); ?>
+												<ul style="list-style:disc; margin:.4em 0 .4em 1.4em;">
+													<li><strong>Maps JavaScript API</strong> — <?php esc_html_e( 'renders the map', 'rw-dealer-portal' ); ?></li>
+													<li><strong>Places API</strong> — <?php esc_html_e( 'powers the location search/geocoding in the search bar', 'rw-dealer-portal' ); ?></li>
+													<li><strong>Geocoding API</strong> — <?php esc_html_e( 'converts dealer addresses to lat/lng coordinates when a dealer post is saved', 'rw-dealer-portal' ); ?></li>
+												</ul>
+											</li>
+											<li><?php esc_html_e( 'Go to APIs &amp; Services → Credentials → Create Credentials → API key — create two keys total:', 'rw-dealer-portal' ); ?>
+												<ul style="list-style:disc; margin:.4em 0 .4em 1.4em;">
+													<li>
+														<strong><?php esc_html_e( 'Key 1 — Frontend/Browser key', 'rw-dealer-portal' ); ?></strong><br>
+														<?php esc_html_e( 'Name: "Dealer Finder — Frontend"', 'rw-dealer-portal' ); ?><br>
+														<?php esc_html_e( 'Application restrictions → HTTP referrers (Websites) → add https://yourdomain.com/* and https://www.yourdomain.com/*', 'rw-dealer-portal' ); ?><br>
+														<?php esc_html_e( 'API restrictions → Restrict to: Maps JavaScript API + Places API + Geocoding API', 'rw-dealer-portal' ); ?><br>
+														<?php esc_html_e( 'Paste into "Frontend API Key" below.', 'rw-dealer-portal' ); ?>
+													</li>
+													<li style="margin-top:.5em;">
+														<strong><?php esc_html_e( 'Key 2 — Server/Geocoding key', 'rw-dealer-portal' ); ?></strong><br>
+														<?php esc_html_e( 'Name: "Dealer Finder — Server"', 'rw-dealer-portal' ); ?><br>
+														<?php esc_html_e( 'Application restrictions → IP addresses → add your hosting server\'s outbound IP (IP address for external connections in Kinsta)', 'rw-dealer-portal' ); ?><br>
+														<?php esc_html_e( 'API restrictions → Restrict to: Geocoding API only', 'rw-dealer-portal' ); ?><br>
+														<?php esc_html_e( 'Paste into "Server Key (Geocoding)" below.', 'rw-dealer-portal' ); ?>
+													</li>
+												</ul>
+											</li>
+										</ol>
+									</details>
+								</td>
+							</tr>
 
 							<tr>
 								<th scope="row">
@@ -335,35 +318,57 @@ function rwdp_admin_settings_page() {
 
 						<?php elseif ( 'dealer_finder' === $current_tab ) : ?>
 
-							<tr>
-								<th scope="row"><?php esc_html_e( 'Enable Project Type Dropdown', 'rw-dealer-portal' ); ?></th>
-								<td>
-									<label for="rwdp_enable_type_dropdown">
-										<input type="checkbox" id="rwdp_enable_type_dropdown" name="rwdp_settings[enable_type_dropdown]" value="1" <?php checked( $enable_dropdown ); ?> />
-										<?php esc_html_e( 'Show project type dropdown on the Dealer Finder map page.', 'rw-dealer-portal' ); ?>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'ACF Relationship Filters', 'rw-dealer-portal' ); ?></th>
+							<td>
+								<?php if ( ! empty( $detected_acf_fields ) ) : ?>
+									<fieldset>
+										<legend class="screen-reader-text"><?php esc_html_e( 'ACF Relationship Filters', 'rw-dealer-portal' ); ?></legend>
+										<?php foreach ( $detected_acf_fields as $acf_field ) : ?>
+											<label style="display:block; margin-bottom:6px;">
+												<input type="checkbox"
+													name="rwdp_settings[active_filter_fields][]"
+													value="<?php echo esc_attr( $acf_field['key'] ); ?>"
+													<?php checked( in_array( $acf_field['key'], $active_filter_fields, true ) ); ?> />
+												<strong><?php echo esc_html( $acf_field['label'] ); ?></strong>
+												<code style="margin-left:6px;"><?php echo esc_html( $acf_field['key'] ); ?></code>
+												<span class="description" style="margin-left:6px;">
+													<?php
+													$opt_count = count( rwdp_get_relationship_filter_options( $acf_field['key'] ) );
+													printf(
+														/* translators: %d: number of filter options */
+														esc_html__( '— %d option(s) detected', 'rw-dealer-portal' ),
+														absint( $opt_count )
+													);
+													?>
+												</span>
+											</label>
+										<?php endforeach; ?>
+									</fieldset>
+									<p class="description"><?php esc_html_e( 'Check each ACF Relationship or Post Object field to expose as a filter dropdown on the Dealer Finder.', 'rw-dealer-portal' ); ?></p>
+								<?php elseif ( ! function_exists( 'acf_get_field_groups' ) ) : ?>
+									<p class="description"><?php esc_html_e( 'Advanced Custom Fields is not active. Install ACF and add Relationship or Post Object fields to the Dealer post type to enable ACF-based filters.', 'rw-dealer-portal' ); ?></p>
+								<?php else : ?>
+									<p class="description"><?php esc_html_e( 'No ACF Relationship or Post Object fields detected on the Dealer post type. Add them in ACF and they will appear here automatically.', 'rw-dealer-portal' ); ?></p>
+								<?php endif; ?>
+							</td>
+						</tr>
+
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Filter Logic', 'rw-dealer-portal' ); ?></th>
+							<td>
+								<fieldset>
+									<legend class="screen-reader-text"><?php esc_html_e( 'Filter Logic', 'rw-dealer-portal' ); ?></legend>
+									<label style="display:block; margin-bottom:6px;">
+										<input type="radio" name="rwdp_settings[filter_logic]" value="and" <?php checked( $filter_logic, 'and' ); ?> />
+										<strong><?php esc_html_e( 'AND', 'rw-dealer-portal' ); ?></strong> &mdash; <?php esc_html_e( 'Dealer must match all selected filters.', 'rw-dealer-portal' ); ?>
 									</label>
-									<p class="description"><?php esc_html_e( 'If unchecked, the map page will not show a project type dropdown. Locked shortcode filtering can still be used.', 'rw-dealer-portal' ); ?></p>
-								</td>
-							</tr>
-
-							<tr>
-								<th scope="row"><label for="rwdp_filter_source_mode"><?php esc_html_e( 'Filter Source Mode', 'rw-dealer-portal' ); ?></label></th>
-								<td>
-									<select id="rwdp_filter_source_mode" name="rwdp_settings[filter_source_mode]">
-										<option value="acf_relationship_field" <?php selected( $filter_mode, 'acf_relationship_field' ); ?>><?php esc_html_e( 'ACF relationship field', 'rw-dealer-portal' ); ?></option>
-									</select>
-									<p class="description"><?php esc_html_e( 'Dropdown options are built from related posts selected in the ACF field below across published dealers.', 'rw-dealer-portal' ); ?></p>
-								</td>
-							</tr>
-
-							<tr>
-								<th scope="row"><label for="rwdp_filter_acf_field_name"><?php esc_html_e( 'ACF Relationship Field Name', 'rw-dealer-portal' ); ?></label></th>
-								<td>
-									<input type="text" id="rwdp_filter_acf_field_name" name="rwdp_settings[filter_acf_field_name]" value="<?php echo esc_attr( $acf_field_name ); ?>" class="regular-text" placeholder="service_types" />
-									<p class="description"><?php esc_html_e( 'Field name/key on rw_dealer that stores related posts (ACF Relationship or Post Object). Example: service_types.', 'rw-dealer-portal' ); ?></p>
-								</td>
-							</tr>
-
+									<label style="display:block;">
+										<input type="radio" name="rwdp_settings[filter_logic]" value="or" <?php checked( $filter_logic, 'or' ); ?> />
+										<strong><?php esc_html_e( 'OR', 'rw-dealer-portal' ); ?></strong> &mdash; <?php esc_html_e( 'Dealer matches if it satisfies any one of the selected filters.', 'rw-dealer-portal' ); ?>
+									</label>
+								</fieldset>
+								<p class="description"><?php esc_html_e( 'Applies across all active filters (ACF fields and Dealer Type taxonomy).', 'rw-dealer-portal' ); ?></p>
 						<?php endif; ?>
 
 					</table>

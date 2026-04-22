@@ -1,5 +1,33 @@
 # RW Dealer Portal Dev Change Notes
 
+---
+
+## Development Conventions
+
+### Elementor Widgets Must Be Thin Wrappers Around Shortcodes
+
+When building a new Elementor widget for this plugin, **do not duplicate logic**. Follow this pattern:
+
+1. Implement all rendering, querying, and output logic in a shortcode function (in `includes/`).
+2. The Elementor widget's `render()` method should call that shortcode function or its underlying helpers directly — it should add no business logic of its own.
+3. Widget controls map to shortcode attributes. If the shortcode doesn't yet support an attribute, add it to the shortcode first, then expose it as a widget control.
+
+**Why:** Shortcodes remain usable in non-Elementor contexts (block editor, page builders, direct PHP calls). If logic lives only in the widget, it becomes inaccessible outside Elementor and leads to duplication when features need to be shared.
+
+**Example pattern:**
+```php
+protected function render() {
+    $s = $this->get_settings_for_display();
+    echo rwdp_my_feature_shortcode([
+        'some_attr' => $s['some_control'],
+    ]);
+}
+```
+
+The current Dealer Finder (`rwdp_dealer_finder` shortcode + `RWDP_Dealer_Search_Widget`) follows this convention — `dealer-search-widget.php` is essentially a styled wrapper that passes widget settings into `rwdp_render_filter_dropdowns()` and shared helpers.
+
+---
+
 Date: 2026-04-14
 Scope: Dealer Finder type dropdown optionality + ACF relationship field source, implemented with minimal coupling to existing plugin core.
 
