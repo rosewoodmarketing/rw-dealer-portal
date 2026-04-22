@@ -491,8 +491,10 @@ function rwdp_ajax_get_dealers() {
 
 	$taxonomy_filter = absint( wp_unslash( $_POST['tax_type_id'] ?? 0 ) );
 
-	// Locked type: resolve to { field, id } across all active fields.
+	// Locked type: resolve to { field, id } across all active fields,
+	// with a fallback to the rw_dealer_type taxonomy if no ACF match is found.
 	$locked_type_slug = sanitize_text_field( wp_unslash( $_POST['locked_type'] ?? '' ) );
+	$locked_resolved  = false;
 	if ( $locked_type_slug && ! empty( $active_fields ) ) {
 		$all_options = [];
 		foreach ( $active_fields as $fk ) {
@@ -501,6 +503,18 @@ function rwdp_ajax_get_dealers() {
 		$resolved = rwdp_resolve_locked_relationship_id( $locked_type_slug, $all_options );
 		if ( $resolved['id'] && $resolved['field'] ) {
 			$acf_filters[ $resolved['field'] ] = $resolved['id'];
+			$locked_resolved = true;
+		}
+	}
+
+	// Taxonomy fallback: if locked_type was not resolved via ACF fields, treat it as
+	// an rw_dealer_type taxonomy term slug (the documented use-case in the widget).
+	if ( $locked_type_slug && ! $locked_resolved && ! $taxonomy_filter ) {
+		$term = ctype_digit( $locked_type_slug )
+			? get_term( (int) $locked_type_slug, 'rw_dealer_type' )
+			: get_term_by( 'slug', $locked_type_slug, 'rw_dealer_type' );
+		if ( $term && ! is_wp_error( $term ) ) {
+			$taxonomy_filter = $term->term_id;
 		}
 	}
 
