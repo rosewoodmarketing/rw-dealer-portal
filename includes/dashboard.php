@@ -37,7 +37,11 @@ function rwdp_dashboard_shortcode() {
 		<div class="rwdp-dashboard-header">
 			<h2><?php
 			/* translators: %s is the user's first name or display name */
-			printf( esc_html__( 'Welcome back, %s', 'rw-dealer-portal' ), esc_html( $user->first_name ?: $user->display_name ) ); ?></h2>
+			printf( esc_html__( 'Welcome, %s', 'rw-dealer-portal' ), esc_html( $user->first_name ?: $user->display_name ) ); ?></h2>
+			<a href="<?php echo esc_url( wp_logout_url( rwdp_get_page_url( 'login' ) ) ); ?>" class="rwdp-logout-btn">
+				<span class="dashicons dashicons-exit"></span>
+				<?php esc_html_e( 'Log Out', 'rw-dealer-portal' ); ?>
+			</a>
 		</div>
 
 		<div class="rwdp-dashboard-nav">

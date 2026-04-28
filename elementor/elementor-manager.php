@@ -29,6 +29,8 @@ final class RWDP_Elementor_Manager {
 			'dealer-search-widget',
 			'dealer-map-widget',
 			'dealer-list-widget',
+			'login-form-widget',
+			'request-access-widget',
 			// Not yet built out — uncomment when controls are implemented:
 			// 'dashboard-widget',
 			// 'my-account-widget',
@@ -46,6 +48,8 @@ final class RWDP_Elementor_Manager {
 			'RWDP_Dealer_Search_Widget',
 			'RWDP_Dealer_Map_Widget',
 			'RWDP_Dealer_List_Widget',
+			'RWDP_Login_Form_Widget',
+			'RWDP_Request_Access_Widget',
 			// 'RWDP_Dashboard_Widget',
 			// 'RWDP_My_Account_Widget',
 			// 'RWDP_My_Requests_Widget',

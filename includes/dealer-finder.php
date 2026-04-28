@@ -676,6 +676,7 @@ function rwdp_ajax_get_dealers() {
 			'permalink'        => get_permalink( $dealer->ID ),
 			'type_ids'         => $type_ids,
 			'taxonomy_type_ids' => $taxonomy_type_ids,
+			'has_contact_email' => ! empty( get_post_meta( $dealer->ID, '_rwdp_contact_emails', true ) ),
 		];
 	}
 

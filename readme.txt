@@ -4,7 +4,7 @@ Tags: dealer, dealer finder, dealer portal, dealer locator, elementor
 Requires at least: 6.5
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.0.11
+Stable tag: 1.0.13
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -62,6 +62,24 @@ Use the **Lock to Dealer Type** control on the Dealer Search Bar widget and ente
 4. Plugin settings screen (Google Maps API key, page assignments).
 
 == Changelog ==
+
+= 1.0.13 =
+* Fixed: Dealers were disappearing from the Dealer Finder after any edit in wp-admin. Root cause: geocoding was triggered on every save, and any API error (rate limit, billing, network) set `_rwdp_address_valid = '0'`, making the dealer invisible to the search query. Geocoding now only runs when address fields actually change.
+* Fixed: Transient geocoding errors (`REQUEST_DENIED`, `OVER_QUERY_LIMIT`, `NO_RESPONSE`) no longer set `_rwdp_address_valid = '0'`. Only definitive failures (`ZERO_RESULTS`, `INVALID_REQUEST`) mark an address as invalid.
+* Fixed: Geocoding Status meta box was showing a false green "Address geocoded" state based solely on lat/lng presence. It now accurately shows three states: geocoded and valid (green), coordinates exist but hidden from search / needs repair (orange), or geocoding failed (red with error hint).
+* Added: Auto-repair on save — if a dealer's address is unchanged and lat/lng already exist, saving the post automatically restores `_rwdp_address_valid = '1'`, recovering dealers that were incorrectly hidden.
+* Added: WYSIWYG description field (`_rwdp_asset_description`) on `rw_asset` admin edit screen, displayed above the Gallery Sections meta box.
+* Added: Asset description output on `single-rw_asset` template below the asset title.
+* Added: Custom Elementor query hooks `rwdp_top_level_assets` (top-level assets, ordered by menu order) and `rwdp_child_assets` (children of the current queried object) for use with the Elementor Loop Grid widget.
+* Added: Dealer Assets setup page now includes an explanation of how to use the Elementor Loop Grid widget with the `rwdp_top_level_assets` custom query ID.
+* Changed: Featured Image and Dealer Logo upload areas on the Edit Dealer Profile page now display in a two-column CSS grid. Preview images use a 4:3 aspect ratio with `object-fit: contain`.
+* Changed: Logout button on the My Account page moved to the top-right of the account header, matching the dashboard page style.
+* Changed: "Contact This Dealer" button in the Dealer Finder is now hidden when a dealer has no contact email set.
+
+= 1.0.12 =
+* Added: `[rwdp_request_access]` shortcode and Dealer Request Access Form Elementor widget — the request access form is now a standalone widget/shortcode, independent of the login form.
+* Changed: `[rwdp_login_form]` and the Dealer Login Form Elementor widget no longer include a registration tab — login form only.
+* Changed: `RWDP_Login_Form_Widget` content and style controls trimmed to login-only fields (removed Request Access section and Tabs style section).
 
 = 1.0.11 =
 * Added: Portal Manager role now restricted to managing only `rwdp_dealer` and `rwdp_portal_manager` users — admins and other user types are hidden and protected from edit/delete actions.

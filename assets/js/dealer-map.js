@@ -264,7 +264,7 @@ var rwdpInitMap; // exposed globally for Google Maps callback
       }
 
       // Actions: Contact This Dealer | More Info
-      var hasContact  = t.contact;
+      var hasContact  = t.contact && dealer.has_contact_email;
       var hasMoreInfo = t.more_info && dealer.permalink;
 
       if (hasContact || hasMoreInfo) {

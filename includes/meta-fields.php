@@ -141,11 +141,15 @@ function rwdp_render_dealer_geo_meta_box( $post ) {
 	$lng   = get_post_meta( $post->ID, '_rwdp_lng', true );
 	$valid = get_post_meta( $post->ID, '_rwdp_address_valid', true );
 
-	if ( $lat && $lng ) {
+	if ( $lat && $lng && $valid === '1' ) {
 		echo '<p style="color:green;">&#10003; ' . esc_html__( 'Address geocoded', 'rw-dealer-portal' ) . '</p>';
 		echo '<p><strong>' . esc_html__( 'Latitude:', 'rw-dealer-portal' ) . '</strong> ' . esc_html( $lat ) . '</p>';
 		echo '<p><strong>' . esc_html__( 'Longitude:', 'rw-dealer-portal' ) . '</strong> ' . esc_html( $lng ) . '</p>';
-		echo '<p class="description">' . esc_html__( 'Geocoding runs automatically when the post is saved. Edit the address fields and re-save to update.', 'rw-dealer-portal' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Geocoding runs automatically when address fields change. Edit the address and re-save to update.', 'rw-dealer-portal' ) . '</p>';
+	} elseif ( $lat && $lng && $valid !== '1' ) {
+		echo '<p style="color:orange;">&#9888; ' . esc_html__( 'Coordinates exist but dealer is hidden from search (validation flag is incorrect). Save this post to repair automatically.', 'rw-dealer-portal' ) . '</p>';
+		echo '<p><strong>' . esc_html__( 'Latitude:', 'rw-dealer-portal' ) . '</strong> ' . esc_html( $lat ) . '</p>';
+		echo '<p><strong>' . esc_html__( 'Longitude:', 'rw-dealer-portal' ) . '</strong> ' . esc_html( $lng ) . '</p>';
 	} elseif ( $valid === '0' ) {
 		$geo_error = get_post_meta( $post->ID, '_rwdp_geo_error', true );
 		echo '<p style="color:red;">&#10007; ' . esc_html__( 'Address could not be geocoded. Check the address and save again.', 'rw-dealer-portal' ) . '</p>';
@@ -181,6 +185,14 @@ function rwdp_save_dealer_meta( $post_id, $post ) {
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
 	if ( ! current_user_can( 'edit_rw_dealer', $post_id ) ) return;
 
+	// Capture the current address BEFORE overwriting meta, so we can detect changes.
+	$old_full_address = implode( ', ', array_filter( [
+		get_post_meta( $post_id, '_rwdp_address', true ),
+		get_post_meta( $post_id, '_rwdp_city',    true ),
+		get_post_meta( $post_id, '_rwdp_state',   true ),
+		get_post_meta( $post_id, '_rwdp_zip',     true ),
+	] ) );
+
 	$fields = [
 		'_rwdp_address'        => 'rwdp_address',
 		'_rwdp_city'           => 'rwdp_city',
@@ -214,16 +226,22 @@ function rwdp_save_dealer_meta( $post_id, $post ) {
 	$logo_id = absint( $_POST['rwdp_logo_id'] ?? 0 );
 	update_post_meta( $post_id, '_rwdp_logo_id', $logo_id );
 
-	// Trigger geocoding whenever address fields change
-	$full_address = implode( ', ', array_filter( [
+	// Trigger geocoding ONLY when the address fields have actually changed.
+	// Geocoding on every save caused dealers to disappear whenever a non-address
+	// field was edited and the geocoding API returned a transient error.
+	$new_full_address = implode( ', ', array_filter( [
 		sanitize_text_field( wp_unslash( $_POST['rwdp_address'] ?? '' ) ),
 		sanitize_text_field( wp_unslash( $_POST['rwdp_city']    ?? '' ) ),
 		sanitize_text_field( wp_unslash( $_POST['rwdp_state']   ?? '' ) ),
 		sanitize_text_field( wp_unslash( $_POST['rwdp_zip']     ?? '' ) ),
 	] ) );
 
-	if ( $full_address ) {
-		rwdp_geocode_and_store( $post_id, $full_address );
+	if ( $new_full_address && $new_full_address !== $old_full_address ) {
+		rwdp_geocode_and_store( $post_id, $new_full_address );
+	} elseif ( get_post_meta( $post_id, '_rwdp_lat', true ) && get_post_meta( $post_id, '_rwdp_lng', true ) ) {
+		// Address unchanged and coordinates exist — repair the valid flag in case a
+		// previous geocoding API failure incorrectly set it to '0'.
+		update_post_meta( $post_id, '_rwdp_address_valid', '1' );
 	}
 }
 

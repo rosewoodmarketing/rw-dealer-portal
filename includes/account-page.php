@@ -22,7 +22,13 @@ function rwdp_my_account_shortcode() {
 	ob_start();
 	?>
 	<div class="rwdp-portal rwdp-account">
-		<h2><?php esc_html_e( 'My Account', 'rw-dealer-portal' ); ?></h2>
+		<div class="rwdp-account-header">
+			<h2><?php esc_html_e( 'My Account', 'rw-dealer-portal' ); ?></h2>
+			<a href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>" class="rwdp-logout-btn">
+				<span class="dashicons dashicons-exit"></span>
+				<?php esc_html_e( 'Log Out', 'rw-dealer-portal' ); ?>
+			</a>
+		</div>
 
 		<div id="rwdp-account-message" class="rwdp-notice" style="display:none;"></div>
 
@@ -79,12 +85,6 @@ function rwdp_my_account_shortcode() {
 
 			<button type="submit" class="rwdp-btn rwdp-btn--primary"><?php esc_html_e( 'Save Changes', 'rw-dealer-portal' ); ?></button>
 		</form>
-
-		<div class="rwdp-account-logout">
-			<a href="<?php echo esc_url( wp_logout_url( home_url() ) ); ?>" class="rwdp-btn rwdp-btn--ghost">
-				<?php esc_html_e( 'Log Out', 'rw-dealer-portal' ); ?>
-			</a>
-		</div>
 	</div>
 	<?php
 	return ob_get_clean();

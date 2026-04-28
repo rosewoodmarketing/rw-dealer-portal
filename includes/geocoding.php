@@ -62,9 +62,17 @@ function rwdp_geocode_and_store( $post_id, $address ) {
 		update_post_meta( $post_id, '_rwdp_address_valid', '1' );
 		delete_post_meta( $post_id, '_rwdp_geo_error' );
 	} else {
-		// Don't wipe existing coords on API failure — just flag as unvalidated.
-		update_post_meta( $post_id, '_rwdp_address_valid', '0' );
 		$error = ( $result && isset( $result['error'] ) ) ? $result['error'] : 'NO_RESPONSE';
 		update_post_meta( $post_id, '_rwdp_geo_error', sanitize_text_field( $error ) );
+
+		// Only mark address invalid for definitive failures (address not found).
+		// Transient errors (rate limits, network issues, bad API key) should not
+		// strip a dealer from search results — preserve the existing valid status.
+		$definitive_failures = [ 'ZERO_RESULTS', 'INVALID_REQUEST' ];
+		if ( in_array( $error, $definitive_failures, true ) ) {
+			update_post_meta( $post_id, '_rwdp_address_valid', '0' );
+		}
+		// For all other errors (REQUEST_DENIED, OVER_QUERY_LIMIT, NO_RESPONSE, etc.)
+		// leave _rwdp_address_valid and existing lat/lng untouched.
 	}
 }

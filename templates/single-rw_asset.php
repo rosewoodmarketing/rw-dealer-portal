@@ -71,6 +71,13 @@ while ( have_posts() ) :
 			<?php endif; ?>
 			<h1 class="rwdp-asset-single__title"><?php the_title(); ?></h1>
 
+			<?php
+			$asset_description = get_post_meta( $asset_id, '_rwdp_asset_description', true );
+			if ( $asset_description ) : ?>
+				<div class="rwdp-asset-single__description">
+					<?php echo wp_kses_post( $asset_description ); ?>
+				</div>
+			<?php endif; ?>
 		</header>
 
 		<?php if ( get_the_content() ) : ?>

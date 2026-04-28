@@ -143,6 +143,57 @@
   });
 
   // -----------------------------------------------------------------------
+  // Dealer image upload (featured image / logo) — fires on file selection
+  // -----------------------------------------------------------------------
+  $(document).on('change', '.rwdp-image-upload', function () {
+    var $input    = $(this);
+    var field     = $input.data('field');
+    var $wrap     = $input.closest('.rwdp-image-uploads');
+    var dealerId  = $wrap.data('dealer-id');
+    var $row      = $input.closest('.rwdp-form-row');
+    var $preview  = $row.find('.rwdp-image-preview');
+    var $spinner  = $row.find('.rwdp-upload-spinner');
+    var $msg      = $('#rwdp-image-msg-' + dealerId);
+    var file      = this.files[0];
+
+    if (!file) return;
+
+    var formData = new FormData();
+    formData.append('action',    'rwdp_upload_dealer_image');
+    formData.append('nonce',     rwdpPortal.nonce);
+    formData.append('dealer_id', dealerId);
+    formData.append('field',     field);
+    formData.append('file',      file);
+
+    $spinner.show();
+    $msg.hide().removeClass('rwdp-notice--success rwdp-notice--error');
+
+    $.ajax({
+      url:         rwdpPortal.ajaxUrl,
+      method:      'POST',
+      data:        formData,
+      processData: false,
+      contentType: false,
+      success: function (res) {
+        $spinner.hide();
+        if (res.success) {
+          $preview.attr('src', res.data.url).show();
+          $msg.addClass('rwdp-notice--success').text(res.data.message || 'Image updated.').show();
+        } else {
+          $msg.addClass('rwdp-notice--error').text(res.data.message || 'Upload failed.').show();
+        }
+        // Reset file input so the same file can be re-selected if needed
+        $input.val('');
+      },
+      error: function () {
+        $spinner.hide();
+        $msg.addClass('rwdp-notice--error').text('A network error occurred.').show();
+        $input.val('');
+      }
+    });
+  });
+
+  // -----------------------------------------------------------------------
   // Dealer profile edit AJAX
   // -----------------------------------------------------------------------
   $(document).on('submit', '.rwdp-dealer-edit-form', function (e) {

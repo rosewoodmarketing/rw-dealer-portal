@@ -38,24 +38,31 @@ function rwdp_create_portal_pages() {
 	// -------------------------------------------------------------------------
 	// Step 1: Parent page — Dealer Portal (must exist before sub-pages are created)
 	// -------------------------------------------------------------------------
-	if ( empty( $existing['dashboard'] ) || ! get_post( $existing['dashboard'] ) ) {
-		$existing_page = get_page_by_path( 'dealer-portal' );
-		if ( $existing_page ) {
-			$existing['dashboard'] = $existing_page->ID;
+	$dashboard_post = ! empty( $existing['dashboard'] ) ? get_post( $existing['dashboard'] ) : null;
+	if ( ! $dashboard_post || $dashboard_post->post_status === 'trash' ) {
+		if ( $dashboard_post && $dashboard_post->post_status === 'trash' ) {
+			// Restore trashed page
+			wp_update_post( [ 'ID' => $dashboard_post->ID, 'post_status' => 'publish' ] );
+			$existing['dashboard'] = $dashboard_post->ID;
 		} else {
-			$page_id = wp_insert_post( [
-				'post_title'     => 'Dealer Portal',
-				'post_name'      => 'dealer-portal',
-				'post_content'   => '[rwdp_dashboard]',
-				'post_status'    => 'publish',
-				'post_type'      => 'page',
-				'comment_status' => 'closed',
-				'ping_status'    => 'closed',
-			] );
-			if ( $page_id && ! is_wp_error( $page_id ) ) {
-				$existing['dashboard'] = $page_id;
-				update_post_meta( $page_id, '_rwdp_restrict_access', '1' );
-				$restricted_ids[] = $page_id;
+			$existing_page = get_page_by_path( 'dealer-portal' );
+			if ( $existing_page ) {
+				$existing['dashboard'] = $existing_page->ID;
+			} else {
+				$page_id = wp_insert_post( [
+					'post_title'     => 'Dealer Portal',
+					'post_name'      => 'dealer-portal',
+					'post_content'   => '[rwdp_dashboard]',
+					'post_status'    => 'publish',
+					'post_type'      => 'page',
+					'comment_status' => 'closed',
+					'ping_status'    => 'closed',
+				] );
+				if ( $page_id && ! is_wp_error( $page_id ) ) {
+					$existing['dashboard'] = $page_id;
+					update_post_meta( $page_id, '_rwdp_restrict_access', '1' );
+					$restricted_ids[] = $page_id;
+				}
 			}
 		}
 	}
@@ -68,19 +75,48 @@ function rwdp_create_portal_pages() {
 		'login' => [
 			'title'   => 'Portal Login',
 			'slug'    => 'portal-login',
-			'content' => '[rwdp_login_form]',
+			'content' => implode( "\n\n", [
+				'<!-- wp:paragraph -->',
+				'<p>NOTE: This page uses 2 shortcodes by default but if you are using Elementor, you can replace the shortcodes with the <strong>Dealer Login Form</strong> and <strong>Dealer Request Access Form</strong> Elementor Widgets.</p>',
+				'<!-- /wp:paragraph -->',
+				'<!-- wp:heading -->',
+				'<h2 class="wp-block-heading">Log In</h2>',
+				'<!-- /wp:heading -->',
+				'<!-- wp:shortcode -->',
+				'[rwdp_login_form]',
+				'<!-- /wp:shortcode -->',
+				'<!-- wp:heading -->',
+				'<h2 class="wp-block-heading">Request Access</h2>',
+				'<!-- /wp:heading -->',
+				'<!-- wp:shortcode -->',
+				'[rwdp_request_access]',
+				'<!-- /wp:shortcode -->',
+			] ),
 			'private' => false,
 		],
 		'finder' => [
 			'title'   => 'Dealer Finder',
 			'slug'    => 'dealer-finder',
 			'content' => '[rwdp_dealer_finder]',
+			'content' => implode( "\n\n", [
+				'<!-- wp:paragraph -->',
+				'<p>NOTE: This page uses a shortcode by default but if you are using Elementor, you can replace the shortcode with the <strong>Dealer Search Bar</strong>, <strong>Dealer Map</strong> and <strong>Dealer Results List</strong> Elementor Widgets.</p>',
+				'<!-- /wp:paragraph -->',
+				'<!-- wp:shortcode -->',
+				'[rwdp_dealer_finder]',
+				'<!-- /wp:shortcode -->',
+			] ),
 			'private' => false,
 		],
 	];
 
 	foreach ( $top_level_pages as $key => $page ) {
-		if ( ! empty( $existing[ $key ] ) && get_post( $existing[ $key ] ) ) {
+		$existing_post = ! empty( $existing[ $key ] ) ? get_post( $existing[ $key ] ) : null;
+		if ( $existing_post && $existing_post->post_status === 'trash' ) {
+			wp_update_post( [ 'ID' => $existing_post->ID, 'post_status' => 'publish' ] );
+			continue;
+		}
+		if ( $existing_post ) {
 			continue;
 		}
 		$existing_page = get_page_by_path( $page['slug'] );
@@ -111,7 +147,14 @@ function rwdp_create_portal_pages() {
 		'assets' => [
 			'title'   => 'Dealer Assets',
 			'slug'    => 'dealer-assets',
-			'content' => '[rwdp_assets]',
+			'content' => implode( "\n\n", [
+				'<!-- wp:paragraph -->',
+				'<p>This page uses the <strong>[rwdp_assets]</strong> shortcode by default. If you are using Elementor, you can replace the shortcode with a <strong>Loop Grid</strong> widget — set the Query Source to <strong>Custom Query</strong> and enter the Query ID: <strong>rwdp_top_level_assets</strong>. See the plugin docs for full setup instructions.</p>',
+				'<!-- /wp:paragraph -->',
+				'<!-- wp:shortcode -->',
+				'[rwdp_assets]',
+				'<!-- /wp:shortcode -->',
+			] ),
 			'private' => true,
 		],
 		'account' => [
@@ -135,7 +178,12 @@ function rwdp_create_portal_pages() {
 	];
 
 	foreach ( $sub_pages as $key => $page ) {
-		if ( ! empty( $existing[ $key ] ) && get_post( $existing[ $key ] ) ) {
+		$existing_post = ! empty( $existing[ $key ] ) ? get_post( $existing[ $key ] ) : null;
+		if ( $existing_post && $existing_post->post_status === 'trash' ) {
+			wp_update_post( [ 'ID' => $existing_post->ID, 'post_status' => 'publish', 'post_parent' => $dashboard_id ] );
+			continue;
+		}
+		if ( $existing_post ) {
 			continue;
 		}
 		// Use full path so get_page_by_path() finds the child, not a stale top-level page

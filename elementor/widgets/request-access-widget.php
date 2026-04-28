@@ -1,18 +1,18 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
+class RWDP_Request_Access_Widget extends \Elementor\Widget_Base {
 
 	public function get_name() {
-		return 'rwdp_login_form';
+		return 'rwdp_request_access';
 	}
 
 	public function get_title() {
-		return __( 'Dealer Login Form', 'rw-dealer-portal' );
+		return __( 'Dealer Request Access Form', 'rw-dealer-portal' );
 	}
 
 	public function get_icon() {
-		return 'eicon-lock-user';
+		return 'eicon-form-horizontal';
 	}
 
 	public function get_categories() {
@@ -20,14 +20,14 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 	}
 
 	public function get_keywords() {
-		return [ 'login', 'dealer', 'portal' ];
+		return [ 'registration', 'request', 'access', 'dealer', 'portal' ];
 	}
 
 	protected function register_controls() {
 
-		// ── Login Form ────────────────────────────────────────────────────────
+		// ── Form Options ──────────────────────────────────────────────────────
 		$this->start_controls_section( 'section_content', [
-			'label' => __( 'Login Form', 'rw-dealer-portal' ),
+			'label' => __( 'Form Options', 'rw-dealer-portal' ),
 			'tab'   => \Elementor\Controls_Manager::TAB_CONTENT,
 		] );
 
@@ -42,57 +42,101 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 
 		$this->end_controls_section();
 
-		// ── Login Form ──────────────────────────────────────────────────────
-		$this->start_controls_section( 'section_login', [
-			'label' => __( 'Login Form', 'rw-dealer-portal' ),
+		// ── Request Access Form ──────────────────────────────────────────────
+		$this->start_controls_section( 'section_register', [
+			'label' => __( 'Request Access Form', 'rw-dealer-portal' ),
 			'tab'   => \Elementor\Controls_Manager::TAB_CONTENT,
 		] );
 
-		$this->add_control( 'login_username_heading', [
-			'label'     => __( 'Username / Email Field', 'rw-dealer-portal' ),
-			'type'      => \Elementor\Controls_Manager::HEADING,
+		$this->add_control( 'reg_intro_text', [
+			'label'       => __( 'Intro Text', 'rw-dealer-portal' ),
+			'type'        => \Elementor\Controls_Manager::TEXTAREA,
+			'placeholder' => __( 'Fill in the form below to request access…', 'rw-dealer-portal' ),
+			'rows'        => 3,
 		] );
 
-		$this->add_control( 'username_label', [
-			'label'       => __( 'Label', 'rw-dealer-portal' ),
-			'type'        => \Elementor\Controls_Manager::TEXT,
-			'placeholder' => __( 'Email Address or Username', 'rw-dealer-portal' ),
-			'condition'   => [ 'show_labels' => 'yes' ],
-		] );
-
-		$this->add_control( 'username_placeholder', [
-			'label' => __( 'Placeholder', 'rw-dealer-portal' ),
-			'type'  => \Elementor\Controls_Manager::TEXT,
-		] );
-
-		$this->add_control( 'login_password_heading', [
-			'label'     => __( 'Password Field', 'rw-dealer-portal' ),
+		$this->add_control( 'reg_first_name_heading', [
+			'label'     => __( 'First Name Field', 'rw-dealer-portal' ),
 			'type'      => \Elementor\Controls_Manager::HEADING,
 			'separator' => 'before',
 		] );
 
-		$this->add_control( 'password_label', [
+		$this->add_control( 'reg_first_name_label', [
 			'label'       => __( 'Label', 'rw-dealer-portal' ),
 			'type'        => \Elementor\Controls_Manager::TEXT,
-			'placeholder' => __( 'Password', 'rw-dealer-portal' ),
+			'placeholder' => __( 'First Name', 'rw-dealer-portal' ),
 			'condition'   => [ 'show_labels' => 'yes' ],
 		] );
 
-		$this->add_control( 'password_placeholder', [
+		$this->add_control( 'reg_first_name_placeholder', [
 			'label' => __( 'Placeholder', 'rw-dealer-portal' ),
 			'type'  => \Elementor\Controls_Manager::TEXT,
 		] );
 
-		$this->add_control( 'login_button_heading', [
+		$this->add_control( 'reg_last_name_heading', [
+			'label'     => __( 'Last Name Field', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::HEADING,
+			'separator' => 'before',
+		] );
+
+		$this->add_control( 'reg_last_name_label', [
+			'label'       => __( 'Label', 'rw-dealer-portal' ),
+			'type'        => \Elementor\Controls_Manager::TEXT,
+			'placeholder' => __( 'Last Name', 'rw-dealer-portal' ),
+			'condition'   => [ 'show_labels' => 'yes' ],
+		] );
+
+		$this->add_control( 'reg_last_name_placeholder', [
+			'label' => __( 'Placeholder', 'rw-dealer-portal' ),
+			'type'  => \Elementor\Controls_Manager::TEXT,
+		] );
+
+		$this->add_control( 'reg_email_heading', [
+			'label'     => __( 'Email Address Field', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::HEADING,
+			'separator' => 'before',
+		] );
+
+		$this->add_control( 'reg_email_label', [
+			'label'       => __( 'Label', 'rw-dealer-portal' ),
+			'type'        => \Elementor\Controls_Manager::TEXT,
+			'placeholder' => __( 'Email Address', 'rw-dealer-portal' ),
+			'condition'   => [ 'show_labels' => 'yes' ],
+		] );
+
+		$this->add_control( 'reg_email_placeholder', [
+			'label' => __( 'Placeholder', 'rw-dealer-portal' ),
+			'type'  => \Elementor\Controls_Manager::TEXT,
+		] );
+
+		$this->add_control( 'reg_company_heading', [
+			'label'     => __( 'Company / Dealership Field', 'rw-dealer-portal' ),
+			'type'      => \Elementor\Controls_Manager::HEADING,
+			'separator' => 'before',
+		] );
+
+		$this->add_control( 'reg_company_label', [
+			'label'       => __( 'Label', 'rw-dealer-portal' ),
+			'type'        => \Elementor\Controls_Manager::TEXT,
+			'placeholder' => __( 'Company / Dealership Name', 'rw-dealer-portal' ),
+			'condition'   => [ 'show_labels' => 'yes' ],
+		] );
+
+		$this->add_control( 'reg_company_placeholder', [
+			'label' => __( 'Placeholder', 'rw-dealer-portal' ),
+			'type'  => \Elementor\Controls_Manager::TEXT,
+		] );
+
+		$this->add_control( 'reg_button_heading', [
 			'label'     => __( 'Button', 'rw-dealer-portal' ),
 			'type'      => \Elementor\Controls_Manager::HEADING,
 			'separator' => 'before',
 		] );
 
-		$this->add_control( 'login_button_text', [
+		$this->add_control( 'register_button_text', [
 			'label'       => __( 'Button Text', 'rw-dealer-portal' ),
 			'type'        => \Elementor\Controls_Manager::TEXT,
-			'placeholder' => __( 'Log In', 'rw-dealer-portal' ),
+			'placeholder' => __( 'Request Access', 'rw-dealer-portal' ),
 		] );
 
 		$this->end_controls_section();
@@ -110,24 +154,7 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 			'range'      => [ 'px' => [ 'min' => 0, 'max' => 60 ] ],
 			'default'    => [ 'size' => 13, 'unit' => 'px' ],
 			'selectors'  => [
-				'{{WRAPPER}} #loginform p'        => 'margin-bottom: {{SIZE}}{{UNIT}};',
-				'{{WRAPPER}} .rwdp-form-row'      => 'margin-bottom: {{SIZE}}{{UNIT}};',
-			],
-		] );
-
-		$this->add_control( 'links_color', [
-			'label'     => __( 'Links Color', 'rw-dealer-portal' ),
-			'type'      => \Elementor\Controls_Manager::COLOR,
-			'selectors' => [
-				'{{WRAPPER}} .rwdp-auth-lost-pass a' => 'color: {{VALUE}};',
-			],
-		] );
-
-		$this->add_control( 'links_hover_color', [
-			'label'     => __( 'Links Hover Color', 'rw-dealer-portal' ),
-			'type'      => \Elementor\Controls_Manager::COLOR,
-			'selectors' => [
-				'{{WRAPPER}} .rwdp-auth-lost-pass a:hover' => 'color: {{VALUE}};',
+				'{{WRAPPER}} .rwdp-form-row' => 'margin-bottom: {{SIZE}}{{UNIT}};',
 			],
 		] );
 
@@ -145,7 +172,6 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 			'size_units' => [ 'px' ],
 			'range'      => [ 'px' => [ 'min' => 0, 'max' => 40 ] ],
 			'selectors'  => [
-				'{{WRAPPER}} #loginform label'     => 'margin-bottom: {{SIZE}}{{UNIT}}; display: block;',
 				'{{WRAPPER}} .rwdp-form-row label' => 'margin-bottom: {{SIZE}}{{UNIT}};',
 			],
 		] );
@@ -154,14 +180,13 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 			'label'     => __( 'Text Color', 'rw-dealer-portal' ),
 			'type'      => \Elementor\Controls_Manager::COLOR,
 			'selectors' => [
-				'{{WRAPPER}} #loginform label'     => 'color: {{VALUE}};',
 				'{{WRAPPER}} .rwdp-form-row label' => 'color: {{VALUE}};',
 			],
 		] );
 
 		$this->add_group_control( \Elementor\Group_Control_Typography::get_type(), [
 			'name'     => 'label_typography',
-			'selector' => '{{WRAPPER}} #loginform label, {{WRAPPER}} .rwdp-form-row label',
+			'selector' => '{{WRAPPER}} .rwdp-form-row label',
 		] );
 
 		$this->end_controls_section();
@@ -176,17 +201,14 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 			'label'     => __( 'Text Color', 'rw-dealer-portal' ),
 			'type'      => \Elementor\Controls_Manager::COLOR,
 			'selectors' => [
-				'{{WRAPPER}} #user_login'             => 'color: {{VALUE}};',
-				'{{WRAPPER}} #user_pass'              => 'color: {{VALUE}};',
 				'{{WRAPPER}} .rwdp-form input[type="text"]'     => 'color: {{VALUE}};',
 				'{{WRAPPER}} .rwdp-form input[type="email"]'    => 'color: {{VALUE}};',
-				'{{WRAPPER}} .rwdp-form input[type="password"]' => 'color: {{VALUE}};',
 			],
 		] );
 
 		$this->add_group_control( \Elementor\Group_Control_Typography::get_type(), [
 			'name'     => 'field_typography',
-			'selector' => '{{WRAPPER}} #user_login, {{WRAPPER}} #user_pass, {{WRAPPER}} .rwdp-form input[type="text"], {{WRAPPER}} .rwdp-form input[type="email"], {{WRAPPER}} .rwdp-form input[type="password"]',
+			'selector' => '{{WRAPPER}} .rwdp-form input[type="text"], {{WRAPPER}} .rwdp-form input[type="email"]',
 		] );
 
 		$this->add_control( 'field_bg_color', [
@@ -194,18 +216,15 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 			'type'      => \Elementor\Controls_Manager::COLOR,
 			'separator' => 'before',
 			'selectors' => [
-				'{{WRAPPER}} #user_login'                       => 'background-color: {{VALUE}};',
-				'{{WRAPPER}} #user_pass'                        => 'background-color: {{VALUE}};',
-				'{{WRAPPER}} .rwdp-form input[type="text"]'     => 'background-color: {{VALUE}};',
-				'{{WRAPPER}} .rwdp-form input[type="email"]'    => 'background-color: {{VALUE}};',
-				'{{WRAPPER}} .rwdp-form input[type="password"]' => 'background-color: {{VALUE}};',
+				'{{WRAPPER}} .rwdp-form input[type="text"]'  => 'background-color: {{VALUE}};',
+				'{{WRAPPER}} .rwdp-form input[type="email"]' => 'background-color: {{VALUE}};',
 			],
 		] );
 
 		$this->add_group_control( \Elementor\Group_Control_Border::get_type(), [
 			'name'      => 'field_border',
 			'separator' => 'before',
-			'selector'  => '{{WRAPPER}} #user_login, {{WRAPPER}} #user_pass, {{WRAPPER}} .rwdp-form input[type="text"], {{WRAPPER}} .rwdp-form input[type="email"], {{WRAPPER}} .rwdp-form input[type="password"]',
+			'selector'  => '{{WRAPPER}} .rwdp-form input[type="text"], {{WRAPPER}} .rwdp-form input[type="email"]',
 		] );
 
 		$this->add_control( 'field_border_radius', [
@@ -213,11 +232,8 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 			'type'       => \Elementor\Controls_Manager::DIMENSIONS,
 			'size_units' => [ 'px', '%', 'em' ],
 			'selectors'  => [
-				'{{WRAPPER}} #user_login'                       => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
-				'{{WRAPPER}} #user_pass'                        => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
-				'{{WRAPPER}} .rwdp-form input[type="text"]'     => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
-				'{{WRAPPER}} .rwdp-form input[type="email"]'    => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
-				'{{WRAPPER}} .rwdp-form input[type="password"]' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				'{{WRAPPER}} .rwdp-form input[type="text"]'  => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				'{{WRAPPER}} .rwdp-form input[type="email"]' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
 			],
 		] );
 
@@ -231,7 +247,7 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 
 		$this->add_group_control( \Elementor\Group_Control_Typography::get_type(), [
 			'name'     => 'btn_typography',
-			'selector' => '{{WRAPPER}} #wp-submit, {{WRAPPER}} .rwdp-btn--primary',
+			'selector' => '{{WRAPPER}} .rwdp-btn--primary',
 		] );
 
 		$this->start_controls_tabs( 'btn_tabs' );
@@ -244,7 +260,6 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 			'label'     => __( 'Text Color', 'rw-dealer-portal' ),
 			'type'      => \Elementor\Controls_Manager::COLOR,
 			'selectors' => [
-				'{{WRAPPER}} #wp-submit'         => 'color: {{VALUE}};',
 				'{{WRAPPER}} .rwdp-btn--primary' => 'color: {{VALUE}};',
 			],
 		] );
@@ -252,7 +267,7 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 		$this->add_group_control( \Elementor\Group_Control_Background::get_type(), [
 			'name'     => 'btn_bg',
 			'types'    => [ 'classic', 'gradient' ],
-			'selector' => '{{WRAPPER}} #wp-submit, {{WRAPPER}} .rwdp-btn--primary',
+			'selector' => '{{WRAPPER}} .rwdp-btn--primary',
 		] );
 
 		$this->end_controls_tab();
@@ -265,7 +280,6 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 			'label'     => __( 'Text Color', 'rw-dealer-portal' ),
 			'type'      => \Elementor\Controls_Manager::COLOR,
 			'selectors' => [
-				'{{WRAPPER}} #wp-submit:hover'         => 'color: {{VALUE}};',
 				'{{WRAPPER}} .rwdp-btn--primary:hover' => 'color: {{VALUE}};',
 			],
 		] );
@@ -273,7 +287,7 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 		$this->add_group_control( \Elementor\Group_Control_Background::get_type(), [
 			'name'     => 'btn_bg_hover',
 			'types'    => [ 'classic', 'gradient' ],
-			'selector' => '{{WRAPPER}} #wp-submit:hover, {{WRAPPER}} .rwdp-btn--primary:hover',
+			'selector' => '{{WRAPPER}} .rwdp-btn--primary:hover',
 		] );
 
 		$this->end_controls_tab();
@@ -282,7 +296,7 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 		$this->add_group_control( \Elementor\Group_Control_Border::get_type(), [
 			'name'      => 'btn_border',
 			'separator' => 'before',
-			'selector'  => '{{WRAPPER}} #wp-submit, {{WRAPPER}} .rwdp-btn--primary',
+			'selector'  => '{{WRAPPER}} .rwdp-btn--primary',
 		] );
 
 		$this->add_control( 'btn_border_radius', [
@@ -290,7 +304,6 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 			'type'       => \Elementor\Controls_Manager::DIMENSIONS,
 			'size_units' => [ 'px', '%', 'em' ],
 			'selectors'  => [
-				'{{WRAPPER}} #wp-submit'         => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
 				'{{WRAPPER}} .rwdp-btn--primary' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
 			],
 		] );
@@ -300,7 +313,6 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 			'type'       => \Elementor\Controls_Manager::DIMENSIONS,
 			'size_units' => [ 'px', 'em' ],
 			'selectors'  => [
-				'{{WRAPPER}} #wp-submit'         => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
 				'{{WRAPPER}} .rwdp-btn--primary' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
 			],
 		] );
@@ -309,6 +321,6 @@ class RWDP_Login_Form_Widget extends \Elementor\Widget_Base {
 	}
 
 	protected function render() {
-		echo rwdp_login_form_shortcode( $this->get_settings_for_display() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- output escaping handled within the shortcode function
+		echo rwdp_request_access_shortcode( $this->get_settings_for_display() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- output escaping handled within the shortcode function
 	}
 }

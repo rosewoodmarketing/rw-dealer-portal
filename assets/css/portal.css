@@ -125,7 +125,6 @@
 .rwdp-form-row textarea,
 .rwdp-form-row select {
   width: 100%;
-  max-width: 480px;
   padding: 8px 12px;
   border: 1px solid #ccc;
   border-radius: 4px;
@@ -139,9 +138,48 @@
   min-height: 100px;
 }
 
+.rwdp-field-desc {
+  font-size: 0.8125rem;
+  color: #666;
+  margin-top: 4px;
+}
+
 /* ---- Dashboard nav cards ---- */
-.rwdp-dashboard-header h2 {
+.rwdp-dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 24px;
+}
+
+.rwdp-dashboard-header h2 {
+  margin-bottom: 0;
+}
+
+.rwdp-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #555;
+  text-decoration: none;
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.rwdp-logout-btn:hover {
+  border-color: #c0392b;
+  color: #c0392b;
+}
+
+.rwdp-logout-btn .dashicons {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 .rwdp-dashboard-nav {
@@ -455,14 +493,58 @@
   border-bottom: 1px solid #f0f0f0;
 }
 
-.rwdp-account-logout {
-  margin-top: 32px;
+.rwdp-account-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.rwdp-account-header h2 {
+  margin: 0;
 }
 
 .rwdp-dealer-edit-panel {
   margin-bottom: 40px;
   padding-bottom: 24px;
   border-bottom: 1px solid #eee;
+}
+
+.rwdp-image-uploads {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #eee;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.rwdp-image-uploads > [id^="rwdp-image-msg-"] {
+  grid-column: 1 / -1;
+}
+
+.rwdp-image-upload-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.rwdp-image-upload-wrap .rwdp-image-preview {
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #f8f8f8;
+}
+
+@media ( max-width: 600px ) {
+  .rwdp-image-uploads {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ---- Login form ---- */
@@ -506,6 +588,18 @@
   margin-bottom: 12px;
 }
 
+.rwdp-auth-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
 .rwdp-auth-tabs a{
   padding: 5px;
-} 
+}
+
+.rwdp-auth-panel--no-labels label {
+  display: none;
+}

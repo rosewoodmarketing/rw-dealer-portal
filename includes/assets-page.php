@@ -179,9 +179,25 @@ add_action( 'admin_footer-post-new.php', 'rwdp_asset_meta_admin_script' );
 function rwdp_register_asset_meta_boxes() {
 	$post_type = 'rw_asset';
 
+	add_meta_box( 'rwdp_asset_description', __( 'Description', 'rw-dealer-portal' ),         'rwdp_render_asset_description_meta_box', $post_type, 'normal', 'high' );
 	add_meta_box( 'rwdp_gallery_sections',  __( 'Gallery Sections', 'rw-dealer-portal' ),  'rwdp_render_gallery_sections_meta_box',  $post_type, 'normal', 'high' );
 	add_meta_box( 'rwdp_video_sections',    __( 'Video Sections', 'rw-dealer-portal' ),    'rwdp_render_video_sections_meta_box',    $post_type, 'normal', 'default' );
 	add_meta_box( 'rwdp_download_sections', __( 'Download Sections', 'rw-dealer-portal' ), 'rwdp_render_download_sections_meta_box', $post_type, 'normal', 'default' );
+}
+
+// ── Description ──────────────────────────────────────────────────────────────
+function rwdp_render_asset_description_meta_box( $post ) {
+	$content = get_post_meta( $post->ID, '_rwdp_asset_description', true );
+	wp_editor(
+		wp_kses_post( $content ),
+		'rwdpassetdescription',
+		[
+			'textarea_name' => 'rwdp_asset_description',
+			'textarea_rows' => 8,
+			'media_buttons' => false,
+			'teeny'         => false,
+		]
+	);
 }
 
 // ── Gallery Sections ──────────────────────────────────────────────────────────
@@ -305,6 +321,11 @@ function rwdp_save_asset_meta( $post_id, $post ) {
 	}
 	if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
 	if ( ! current_user_can( 'edit_rw_asset', $post_id ) ) return;
+
+	// Description (WYSIWYG)
+	if ( isset( $_POST['rwdp_asset_description'] ) ) {
+		update_post_meta( $post_id, '_rwdp_asset_description', wp_kses_post( wp_unslash( $_POST['rwdp_asset_description'] ) ) );
+	}
 
 	// Gallery sections
 	$raw_gallery = wp_unslash( $_POST['rwdp_gallery_sections'] ?? [] );
