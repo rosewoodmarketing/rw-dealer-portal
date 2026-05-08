@@ -72,7 +72,9 @@ final class RWDP_Elementor_Manager {
 		$tag_files = [
 			'tag-address',
 			'tag-phone',
+			'tag-phone-link',
 			'tag-website',
+			'tag-website-url',
 			'tag-email',
 			'tag-hours',
 			'tag-logo',
@@ -86,7 +88,9 @@ final class RWDP_Elementor_Manager {
 		$tag_classes = [
 			'RWDP_Tag_Address',
 			'RWDP_Tag_Phone',
+			'RWDP_Tag_Phone_Link',
 			'RWDP_Tag_Website',
+			'RWDP_Tag_Website_URL',
 			'RWDP_Tag_Email',
 			'RWDP_Tag_Hours',
 			'RWDP_Tag_Logo',

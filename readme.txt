@@ -4,7 +4,7 @@ Tags: dealer, dealer finder, dealer portal, dealer locator, elementor
 Requires at least: 6.5
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.0.13
+Stable tag: 1.0.14
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -62,6 +62,12 @@ Use the **Lock to Dealer Type** control on the Dealer Search Bar widget and ente
 4. Plugin settings screen (Google Maps API key, page assignments).
 
 == Changelog ==
+
+= 1.0.14 =
+* Added: Elementor dynamic tag "Dealer Phone Link" (URL category) — outputs a `tel:` URI for use in button/link URL fields in the Loop Grid or any Elementor widget.
+* Added: Elementor dynamic tag "Dealer Website URL" (URL category) — outputs the full `https://` website URL for use in button/link URL fields.
+* Fixed: "Contact This Dealer" button in the Dealer Map popup now correctly hides when a dealer has no contact email, matching the existing List widget behaviour.
+* Added: "View on Map Scroll Offset" control on the Dealer List widget — sets the gap (in px) between the top of the viewport and the top of the map after clicking "View on Map". Useful for accommodating fixed/sticky headers.
 
 = 1.0.13 =
 * Fixed: Dealers were disappearing from the Dealer Finder after any edit in wp-admin. Root cause: geocoding was triggered on every save, and any API error (rate limit, billing, network) set `_rwdp_address_valid = '0'`, making the dealer invisible to the search query. Geocoding now only runs when address fields actually change.

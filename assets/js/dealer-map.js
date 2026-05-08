@@ -78,7 +78,7 @@ var rwdpInitMap; // exposed globally for Google Maps callback
 
     html += '</div>';
 
-    if ( show.contact ) {
+    if ( show.contact && dealer.has_contact_email ) {
         html += '<button type="button" class="rwdp-btn rwdp-btn--primary rwdp-btn--sm rwdp-contact-trigger" data-dealer-id="' + dealer.id + '" data-dealer-name="' + escHtml(dealer.title) + '">' + show.contact_text + '</button>';
       }
 
@@ -390,7 +390,8 @@ var rwdpInitMap; // exposed globally for Google Maps callback
     }
     var $map = $('#rwdp-map');
     if ($map.length) {
-      $('html, body').animate({ scrollTop: $map.offset().top }, 400);
+      var offset = parseInt($('#rwdp-results-list').data('scroll-offset'), 10) || 0;
+      $('html, body').animate({ scrollTop: $map.offset().top - offset }, 400);
     }
   });
   $(document).on('click', '#rwdp-modal-close, #rwdp-modal-overlay', function () {

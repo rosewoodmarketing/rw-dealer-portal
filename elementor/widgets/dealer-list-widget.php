@@ -87,6 +87,14 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 			'condition' => [ 'show_view_on_map' => 'yes' ],
 		] );
 
+		$this->add_control( 'scroll_offset', [
+			'label'       => __( 'View on Map Scroll Offset (px)', 'rw-dealer-portal' ),
+			'description' => __( 'Gap between the top of the viewport and the top of the map after scrolling. E.g. 100 leaves 100px of space above the map (useful for fixed headers).', 'rw-dealer-portal' ),
+			'type'        => \Elementor\Controls_Manager::NUMBER,
+			'default'     => 0,
+			'condition'   => [ 'show_view_on_map' => 'yes' ],
+		] );
+
 		$this->end_controls_section();
 
 		// ── Content: Card Toggles ─────────────────────────────────────────
@@ -990,6 +998,7 @@ class RWDP_Dealer_List_Widget extends \Elementor\Widget_Base {
 			'data-contact-text="'             . esc_attr( $s['contact_text']     ?? __( 'Contact This Dealer', 'rw-dealer-portal' ) ) . '"',
 			'data-more-info-text="'           . esc_attr( $s['more_info_text']   ?? __( 'More Info',          'rw-dealer-portal' ) ) . '"',
 			'data-view-on-map-text="'         . esc_attr( $s['view_on_map_text'] ?? __( 'View on Map',        'rw-dealer-portal' ) ) . '"',
+			'data-scroll-offset="'            . esc_attr( (int) ( $s['scroll_offset'] ?? 0 ) ) . '"',
 			'data-thumbnail-image-size="'     . esc_attr( $s['thumbnail_image_size'] ?? 'large' ) . '"',
 			'data-logo-image-size="'          . esc_attr( $s['logo_image_size']      ?? 'large' ) . '"',
 		] );
