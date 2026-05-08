@@ -28,6 +28,53 @@ The current Dealer Finder (`rwdp_dealer_finder` shortcode + `RWDP_Dealer_Search_
 
 ---
 
+Date: 2026-05-08
+Scope: Portal Manager core-content permissions controls (implemented settings-driven add/edit/delete for Posts, Pages, Media).
+
+## Implemented change summary
+1. Added a new Dealer Portal Settings tab (`Portal Manager Access`) to control Portal Manager access to WordPress core content.
+2. Added two checkboxes:
+- Allow add/edit for Posts, Pages, Media.
+- Allow delete for Posts, Pages, Media.
+3. Kept sensitive capabilities blocked at all times (plugins/themes/options/tools/theme settings).
+4. Updated capability enforcement and menu/admin-bar visibility in access control to read these settings at runtime.
+
+## Why this approach
+1. Uses existing plugin architecture (`rwdp_settings` + capability filters) without introducing new roles.
+2. Allows instant operational toggles without code deploys after feature lands.
+3. Keeps rollback simple: remove tab/settings keys and revert runtime gating logic.
+
+## Files changed
+1. `includes/admin-settings.php`
+- Added tab slug/label: `portal_manager_access` / `Portal Manager Access`.
+- Added checkbox UI.
+- Added sanitization keys:
+  - `portal_manager_allow_core_content_manage`
+  - `portal_manager_allow_core_content_delete`
+- Added consistency rule: delete is forced off when manage is off.
+- Added hidden field preservation across tab saves.
+2. `includes/access-control.php`
+- Added helper: `rwdp_get_portal_manager_core_content_permissions()`.
+- Updated `rwdp_restrict_portal_manager_caps()` to grant/block core post/page/media caps from settings.
+- Updated menu/admin-bar behavior to match manage toggle.
+3. `includes/roles.php`
+- No changes required; role defaults remain unchanged and runtime filtering handles this feature.
+
+## Rollback plan
+1. Revert settings tab additions in `includes/admin-settings.php`.
+2. Remove settings key sanitization and hidden-value preservation for the two new options in `includes/admin-settings.php`.
+3. Revert capability/menu/admin-bar conditional logic in `includes/access-control.php` to the previous hard-block behavior.
+4. Keep role definitions in `includes/roles.php` unchanged (no data migration required).
+5. Optional DB cleanup: remove `portal_manager_allow_core_content_manage` and `portal_manager_allow_core_content_delete` from `rwdp_settings`.
+
+## Validation checklist
+1. Both checkboxes off: Portal Manager cannot create/edit/delete posts, pages, or media.
+2. Manage on, delete off: Portal Manager can create/edit/upload but cannot delete.
+3. Both on: Portal Manager can create/edit/delete/upload.
+4. Portal Manager still cannot access Plugins, Themes, Settings, or Tools.
+
+---
+
 Date: 2026-04-14
 Scope: Dealer Finder type dropdown optionality + ACF relationship field source, implemented with minimal coupling to existing plugin core.
 

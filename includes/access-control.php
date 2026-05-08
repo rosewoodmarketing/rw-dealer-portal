@@ -94,22 +94,77 @@ function rwdp_maybe_hide_admin_bar() {
 // ── Portal Manager: restrict admin capabilities ──────────────────────────────
 add_filter( 'user_has_cap', 'rwdp_restrict_portal_manager_caps', 10, 4 );
 
+/**
+ * Get Portal Manager core content capability toggles from settings.
+ *
+ * @return array{manage:bool,delete:bool}
+ */
+function rwdp_get_portal_manager_core_content_permissions() {
+	$settings      = get_option( 'rwdp_settings', [] );
+	$allow_manage  = ! empty( $settings['portal_manager_allow_core_content_manage'] );
+	$allow_delete  = ! empty( $settings['portal_manager_allow_core_content_delete'] );
+	if ( ! $allow_manage ) {
+		$allow_delete = false;
+	}
+
+	return [
+		'manage' => $allow_manage,
+		'delete' => $allow_delete,
+	];
+}
+
 function rwdp_restrict_portal_manager_caps( $allcaps, $caps, $args, $user ) {
 	if ( ! in_array( 'rwdp_portal_manager', (array) $user->roles, true ) ) {
 		return $allcaps;
 	}
 
-	// Block editing of core WordPress post types
-	$blocked = [
-		'edit_posts', 'edit_others_posts', 'publish_posts', 'delete_posts', 'delete_others_posts',
-		'edit_pages', 'edit_others_pages', 'publish_pages', 'delete_pages',
-		'activate_plugins', 'install_plugins', 'update_plugins',
+	$permissions = rwdp_get_portal_manager_core_content_permissions();
+
+	$always_blocked = [
+		'activate_plugins',
+		'install_plugins',
+		'update_plugins',
 		'manage_options',
 		'edit_theme_options',
+		'edit_files',
+		'update_core',
+		'install_themes',
+		'update_themes',
+		'delete_themes',
+		'delete_plugins',
 	];
 
-	foreach ( $blocked as $cap ) {
+	foreach ( $always_blocked as $cap ) {
 		$allcaps[ $cap ] = false;
+	}
+
+	$manage_caps = [
+		'edit_posts',
+		'edit_others_posts',
+		'edit_published_posts',
+		'publish_posts',
+		'edit_pages',
+		'edit_others_pages',
+		'edit_published_pages',
+		'publish_pages',
+		'upload_files',
+	];
+
+	$delete_caps = [
+		'delete_posts',
+		'delete_others_posts',
+		'delete_published_posts',
+		'delete_pages',
+		'delete_others_pages',
+		'delete_published_pages',
+	];
+
+	foreach ( $manage_caps as $cap ) {
+		$allcaps[ $cap ] = $permissions['manage'];
+	}
+
+	foreach ( $delete_caps as $cap ) {
+		$allcaps[ $cap ] = $permissions['manage'] && $permissions['delete'];
 	}
 
 	return $allcaps;
@@ -124,16 +179,22 @@ function rwdp_restrict_portal_manager_menus() {
 		return;
 	}
 
+	$permissions = rwdp_get_portal_manager_core_content_permissions();
+
 	$remove_menus = [
 		'index.php',           // Dashboard
-		'edit.php',            // Posts
-		'edit.php?post_type=page', // Pages
 		'edit-comments.php',   // Comments
 		'themes.php',          // Appearance
 		'plugins.php',         // Plugins
 		'tools.php',           // Tools
 		'options-general.php', // Settings
 	];
+
+	if ( ! $permissions['manage'] ) {
+		$remove_menus[] = 'edit.php';
+		$remove_menus[] = 'edit.php?post_type=page';
+		$remove_menus[] = 'upload.php';
+	}
 
 	foreach ( $remove_menus as $slug ) {
 		remove_menu_page( $slug );
@@ -144,7 +205,10 @@ function rwdp_restrict_portal_manager_menus() {
 }
 
 function rwdp_clean_portal_manager_admin_bar( $wp_admin_bar ) {
-	$wp_admin_bar->remove_node( 'new-content' );
+	$permissions = rwdp_get_portal_manager_core_content_permissions();
+	if ( ! $permissions['manage'] ) {
+		$wp_admin_bar->remove_node( 'new-content' );
+	}
 	$wp_admin_bar->remove_node( 'comments' );
 	$wp_admin_bar->remove_node( 'appearance' );
 }
