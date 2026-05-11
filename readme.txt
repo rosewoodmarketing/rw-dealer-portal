@@ -4,7 +4,7 @@ Tags: dealer, dealer finder, dealer portal, dealer locator, elementor
 Requires at least: 6.5
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.0.15
+Stable tag: 1.0.16
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -62,6 +62,14 @@ Use the **Lock to Dealer Type** control on the Dealer Search Bar widget and ente
 4. Plugin settings screen (Google Maps API key, page assignments).
 
 == Changelog ==
+
+= 1.0.16 =
+* Added: Dealer CSV importer — upload a `.csv` file from the Dealers admin list screen (via the new "Import CSV" button) to bulk-create dealer records. Required column: `title`. Optional columns: `address`, `city`, `state`, `zip`, `phone`, `public_email`, `contact_emails`, `hours`, `website`, `dealer_type`, `featured_image_url`, `logo_url`, `lat`, `lng`. Duplicate titles (matched by post title) are skipped. Results screen shows processed, imported, skipped, error, and warning counts with per-row detail.
+
+= 1.0.15 =
+* Changed: Dealer Assets seeded page content now renders `[rwdp_assets]` as literal text in the instructional note (was previously executing as a shortcode on page load).
+* Changed: Dealer Assets seeded page content now includes a link to the Elementor Loop Grid setup guide (`docs/assets-elementor-loop-grid.md`).
+* Changed: Renamed `docs/elementor-loop-grid.md` to `docs/assets-elementor-loop-grid.md` to better reflect its scope (Assets page Elementor setup).
 
 = 1.0.14 =
 * Added: Elementor dynamic tag "Dealer Phone Link" (URL category) — outputs a `tel:` URI for use in button/link URL fields in the Loop Grid or any Elementor widget.

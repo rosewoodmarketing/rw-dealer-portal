@@ -73,7 +73,7 @@ function rwdp_render_import_dealers_page() {
 		<h1><?php esc_html_e( 'Import Dealers from CSV', 'rw-dealer-portal' ); ?></h1>
 
 		<p>
-			<?php esc_html_e( 'Upload a CSV file to create dealer records. Duplicate dealer titles are skipped.', 'rw-dealer-portal' ); ?>
+			<?php esc_html_e( 'Upload a CSV file to create dealer records. The Title(Dealer Name) column is required and used to check for duplicates. If a record already exists with the same title, the importer will skip that record. If there are duplicate titles within the CSV file, only the first occurrence will be imported.', 'rw-dealer-portal' ); ?>
 		</p>
 
 		<?php if ( is_array( $results ) ) : ?>
