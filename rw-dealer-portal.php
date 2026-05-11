@@ -29,6 +29,7 @@ require_once RWDP_PLUGIN_DIR . 'includes/setup.php';
 
 // Admin
 require_once RWDP_PLUGIN_DIR . 'includes/admin-menu.php';
+require_once RWDP_PLUGIN_DIR . 'includes/import.php';
 require_once RWDP_PLUGIN_DIR . 'includes/admin-settings.php';
 require_once RWDP_PLUGIN_DIR . 'includes/admin-users.php';
 require_once RWDP_PLUGIN_DIR . 'includes/meta-fields.php';
