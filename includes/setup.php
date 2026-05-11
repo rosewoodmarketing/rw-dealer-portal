@@ -149,7 +149,7 @@ function rwdp_create_portal_pages() {
 			'slug'    => 'dealer-assets',
 			'content' => implode( "\n\n", [
 				'<!-- wp:paragraph -->',
-				'<p>This page uses the <strong>[rwdp_assets]</strong> shortcode by default. If you are using Elementor, you can replace the shortcode with a <strong>Loop Grid</strong> widget — set the Query Source to <strong>Custom Query</strong> and enter the Query ID: <strong>rwdp_top_level_assets</strong>. See the plugin docs for full setup instructions.</p>',
+				'<p>This page uses the <strong>[[rwdp_assets]]</strong> shortcode by default. If you are using Elementor, you can replace the shortcode with a <strong>Loop Grid</strong> widget — set the Query Source to <strong>Custom Query</strong> and enter the Query ID: <strong>rwdp_top_level_assets</strong>. See the plugin docs for full setup instructions: <a href="/wp-content/plugins/rw-dealer-portal/docs/assets-elementor-loop-grid.md" target="_blank" rel="noopener">Creating Assets Pages with Elementor</a>.</p>',
 				'<!-- /wp:paragraph -->',
 				'<!-- wp:shortcode -->',
 				'[rwdp_assets]',
