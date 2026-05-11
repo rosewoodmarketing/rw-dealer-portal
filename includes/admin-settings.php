@@ -56,6 +56,12 @@ function rwdp_sanitize_settings( $raw ) {
 	$raw_logic = sanitize_key( $raw['filter_logic'] ?? 'and' );
 	$clean['filter_logic'] = in_array( $raw_logic, [ 'and', 'or' ], true ) ? $raw_logic : 'and';
 
+	$clean['portal_manager_allow_core_content_manage'] = ! empty( $raw['portal_manager_allow_core_content_manage'] ) ? 1 : 0;
+	$clean['portal_manager_allow_core_content_delete'] = ! empty( $raw['portal_manager_allow_core_content_delete'] ) ? 1 : 0;
+	if ( ! $clean['portal_manager_allow_core_content_manage'] ) {
+		$clean['portal_manager_allow_core_content_delete'] = 0;
+	}
+
 	// Array of page IDs to restrict to logged-in portal users
 	$raw_ids = $raw['restricted_page_ids'] ?? [];
 	if ( ! is_array( $raw_ids ) ) {
@@ -86,6 +92,8 @@ function rwdp_admin_settings_page() {
 		$active_filter_fields = [];
 	}
 	$filter_logic         = $settings['filter_logic'] ?? 'and';
+	$portal_manager_allow_core_content_manage = ! empty( $settings['portal_manager_allow_core_content_manage'] );
+	$portal_manager_allow_core_content_delete = ! empty( $settings['portal_manager_allow_core_content_delete'] );
 	$detected_acf_fields  = rwdp_detect_acf_relationship_fields();
 
 	// Fluent Forms list
@@ -98,18 +106,19 @@ function rwdp_admin_settings_page() {
 	// All published pages
 	$all_pages = get_pages( [ 'post_status' => 'publish', 'sort_column' => 'post_title' ] );
 
-	$valid_tabs  = [ 'maps', 'contact', 'pages', 'restricted', 'dealer_finder' ];
+	$valid_tabs  = [ 'maps', 'contact', 'pages', 'restricted', 'dealer_finder', 'portal_manager_access' ];
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$current_tab = ( isset( $_GET['tab'] ) && in_array( $_GET['tab'], $valid_tabs, true ) )
 		? sanitize_key( $_GET['tab'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		: 'maps';
 
 	$tabs = [
-		'maps'       => __( 'Maps API Keys', 'rw-dealer-portal' ),
-		'contact'    => __( 'Contact Form', 'rw-dealer-portal' ),
-		'pages'      => __( 'Portal Pages', 'rw-dealer-portal' ),
-		'restricted' => __( 'Restricted Pages', 'rw-dealer-portal' ),
-		'dealer_finder' => __( 'ACF Relationships', 'rw-dealer-portal' ),
+		'maps'                  => __( 'Maps API Keys', 'rw-dealer-portal' ),
+		'contact'               => __( 'Contact Form', 'rw-dealer-portal' ),
+		'pages'                 => __( 'Portal Pages', 'rw-dealer-portal' ),
+		'restricted'            => __( 'Restricted Pages', 'rw-dealer-portal' ),
+		'dealer_finder'         => __( 'ACF Relationships', 'rw-dealer-portal' ),
+		'portal_manager_access' => __( 'Portal Manager Access', 'rw-dealer-portal' ),
 	];
 
 	?>
@@ -176,6 +185,11 @@ function rwdp_admin_settings_page() {
 							<input type="hidden" name="rwdp_settings[active_filter_fields][]" value="<?php echo esc_attr( $field_key ); ?>" />
 						<?php endforeach; ?>
 						<input type="hidden" name="rwdp_settings[filter_logic]" value="<?php echo esc_attr( $filter_logic ); ?>" />
+					<?php endif; ?>
+
+					<?php if ( 'portal_manager_access' !== $current_tab ) : ?>
+						<input type="hidden" name="rwdp_settings[portal_manager_allow_core_content_manage]" value="<?php echo $portal_manager_allow_core_content_manage ? '1' : '0'; ?>" />
+						<input type="hidden" name="rwdp_settings[portal_manager_allow_core_content_delete]" value="<?php echo $portal_manager_allow_core_content_delete ? '1' : '0'; ?>" />
 					<?php endif; ?>
 
 					<table class="form-table" role="presentation">
@@ -392,6 +406,25 @@ function rwdp_admin_settings_page() {
 									</label>
 								</fieldset>
 								<p class="description"><?php esc_html_e( 'Applies across all active filters (ACF fields and Dealer Type taxonomy).', 'rw-dealer-portal' ); ?></p>
+						<?php elseif ( 'portal_manager_access' === $current_tab ) : ?>
+
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Core Content Permissions', 'rw-dealer-portal' ); ?></th>
+							<td>
+								<fieldset>
+									<legend class="screen-reader-text"><?php esc_html_e( 'Core Content Permissions', 'rw-dealer-portal' ); ?></legend>
+									<label style="display:block; margin-bottom:8px;">
+										<input type="checkbox" name="rwdp_settings[portal_manager_allow_core_content_manage]" value="1" <?php checked( $portal_manager_allow_core_content_manage ); ?> />
+										<?php esc_html_e( 'Allow Portal Manager to add and edit Posts, Pages, and Media.', 'rw-dealer-portal' ); ?>
+									</label>
+									<label style="display:block; margin-bottom:8px;">
+										<input type="checkbox" name="rwdp_settings[portal_manager_allow_core_content_delete]" value="1" <?php checked( $portal_manager_allow_core_content_delete ); ?> />
+										<?php esc_html_e( 'Allow Portal Manager to delete Posts, Pages, and Media.', 'rw-dealer-portal' ); ?>
+									</label>
+								</fieldset>
+								<p class="description"><?php esc_html_e( 'RW Dealer Portal settings remain administrator-only even when these permissions are enabled.', 'rw-dealer-portal' ); ?></p>
+							</td>
+						</tr>
 						<?php endif; ?>
 
 					</table>
