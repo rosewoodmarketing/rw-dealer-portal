@@ -31,6 +31,7 @@ final class RWDP_Elementor_Manager {
 			'dealer-list-widget',
 			'login-form-widget',
 			'request-access-widget',
+			// Contractor List widget moved to Dealer Portal Add-Ons plugin.
 			// Not yet built out — uncomment when controls are implemented:
 			// 'dashboard-widget',
 			// 'my-account-widget',

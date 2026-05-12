@@ -106,6 +106,7 @@ function rwdp_admin_settings_page() {
 	// All published pages
 	$all_pages = get_pages( [ 'post_status' => 'publish', 'sort_column' => 'post_title' ] );
 
+	// Contractor list settings moved to Dealer Portal Add-Ons plugin.
 	$valid_tabs  = [ 'maps', 'contact', 'pages', 'restricted', 'dealer_finder', 'portal_manager_access' ];
 	// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$current_tab = ( isset( $_GET['tab'] ) && in_array( $_GET['tab'], $valid_tabs, true ) )
@@ -406,6 +407,8 @@ function rwdp_admin_settings_page() {
 									</label>
 								</fieldset>
 								<p class="description"><?php esc_html_e( 'Applies across all active filters (ACF fields and Dealer Type taxonomy).', 'rw-dealer-portal' ); ?></p>
+									</td>
+								</tr>
 						<?php elseif ( 'portal_manager_access' === $current_tab ) : ?>
 
 						<tr>

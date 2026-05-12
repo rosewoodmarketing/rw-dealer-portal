@@ -17,7 +17,7 @@ function rwdp_register_dealer_finder_assets() {
 	// Localize at registration time — wp_localize_script only outputs data if the
 	// script is actually enqueued, so this is safe and covers both the shortcode
 	// and Elementor widget paths.
-	wp_localize_script( 'rwdp-dealer-map', 'rwdpMap', [
+	$map_localized_data = [
 		'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
 		'nonce'          => wp_create_nonce( 'rwdp_dealer_finder' ),
 		'hasMapsKey'     => ! empty( $maps_key ),
@@ -26,7 +26,11 @@ function rwdp_register_dealer_finder_assets() {
 		'directionsText' => __( 'Get Directions', 'rw-dealer-portal' ),
 		'viewOnMapText'  => __( 'View on Map', 'rw-dealer-portal' ),
 		'moreInfoText'   => __( 'More Info', 'rw-dealer-portal' ),
-	] );
+	];
+
+	$map_localized_data = apply_filters( 'rwdp_map_localized_data', $map_localized_data );
+
+	wp_localize_script( 'rwdp-dealer-map', 'rwdpMap', $map_localized_data );
 
 	wp_register_script( 'rwdp-ff-helper', RWDP_PLUGIN_URL . 'assets/js/fluent-forms-helper.js', [ 'jquery', 'rwdp-dealer-map' ], RWDP_VERSION, true );
 
@@ -658,7 +662,7 @@ function rwdp_ajax_get_dealers() {
 			? array_map( 'absint', wp_list_pluck( $taxonomy_terms, 'term_id' ) )
 			: [];
 
-		$data[] = [
+		$dealer_data = [
 			'id'               => $dealer->ID,
 			'title'            => $dealer->post_title,
 			'lat'              => $lat,
@@ -678,6 +682,10 @@ function rwdp_ajax_get_dealers() {
 			'taxonomy_type_ids' => $taxonomy_type_ids,
 			'has_contact_email' => ! empty( get_post_meta( $dealer->ID, '_rwdp_contact_emails', true ) ),
 		];
+
+		$dealer_data = apply_filters( 'rwdp_ajax_dealer_data', $dealer_data, $dealer );
+
+		$data[] = $dealer_data;
 	}
 
 	wp_send_json_success( [ 'dealers' => $data ] );
