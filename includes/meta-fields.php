@@ -46,6 +46,7 @@ function rwdp_render_dealer_info_meta_box( $post ) {
 	$state          = get_post_meta( $post->ID, '_rwdp_state', true );
 	$zip            = get_post_meta( $post->ID, '_rwdp_zip', true );
 	$phone          = get_post_meta( $post->ID, '_rwdp_phone', true );
+	$contact_name   = get_post_meta( $post->ID, '_rwdp_contact_name', true );
 	$public_email   = get_post_meta( $post->ID, '_rwdp_public_email', true );
 	$contact_emails = get_post_meta( $post->ID, '_rwdp_contact_emails', true );
 	$hours          = get_post_meta( $post->ID, '_rwdp_hours', true );
@@ -80,6 +81,10 @@ function rwdp_render_dealer_info_meta_box( $post ) {
 	<p class="rwdp-meta-section-title"><?php esc_html_e( 'Contact', 'rw-dealer-portal' ); ?></p>
 
 	<div class="rwdp-meta-row">
+		<label for="rwdp_contact_name"><?php esc_html_e( 'Contact Name', 'rw-dealer-portal' ); ?></label>
+		<input type="text" id="rwdp_contact_name" name="rwdp_contact_name" value="<?php echo esc_attr( $contact_name ); ?>" />
+	</div>
+	<div class="rwdp-meta-row">
 		<label for="rwdp_phone"><?php esc_html_e( 'Phone', 'rw-dealer-portal' ); ?></label>
 		<input type="text" id="rwdp_phone" name="rwdp_phone" value="<?php echo esc_attr( $phone ); ?>" />
 	</div>
@@ -105,7 +110,12 @@ function rwdp_render_dealer_info_meta_box( $post ) {
 		<label for="rwdp_hours"><?php esc_html_e( 'Hours', 'rw-dealer-portal' ); ?></label>
 		<textarea id="rwdp_hours" name="rwdp_hours" rows="4"><?php echo esc_textarea( $hours ); ?></textarea>
 	</div>
+
 	<?php
+	/**
+	 * Extension point for add-ons to inject additional dealer fields.
+	 */
+	do_action( 'rwdp_dealer_info_meta_box_after', $post );
 }
 
 /**
@@ -199,6 +209,7 @@ function rwdp_save_dealer_meta( $post_id, $post ) {
 		'_rwdp_state'          => 'rwdp_state',
 		'_rwdp_zip'            => 'rwdp_zip',
 		'_rwdp_phone'          => 'rwdp_phone',
+		'_rwdp_contact_name'   => 'rwdp_contact_name',
 		'_rwdp_website'        => 'rwdp_website',
 		'_rwdp_public_email'   => 'rwdp_public_email',
 		'_rwdp_contact_emails' => 'rwdp_contact_emails',
@@ -221,6 +232,11 @@ function rwdp_save_dealer_meta( $post_id, $post ) {
 		}
 		update_post_meta( $post_id, $meta_key, $value );
 	}
+
+	/**
+	 * Extension point for add-ons to persist extra dealer meta fields.
+	 */
+	do_action( 'rwdp_save_dealer_meta', $post_id, $post );
 
 	// Logo attachment ID
 	$logo_id = absint( $_POST['rwdp_logo_id'] ?? 0 );

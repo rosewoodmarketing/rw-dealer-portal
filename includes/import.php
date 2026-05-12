@@ -166,7 +166,8 @@ function rwdp_render_import_dealers_page() {
 					<td>
 						<input type="file" id="rwdp_dealer_csv_file" name="rwdp_dealer_csv_file" accept=".csv,text/csv" required />
 						<p class="description">
-							<?php esc_html_e( 'Required column: title. Optional columns: address, city, state, zip, phone, public_email, contact_emails, hours, website, dealer_type, featured_image_url, logo_url, lat, lng.', 'rw-dealer-portal' ); ?>
+							<?php esc_html_e( 'Required column: title. Optional columns: address, city, state, zip, phone, contact_name, public_email, contact_emails, hours, website, dealer_type, featured_image_url, logo_url, lat, lng.', 'rw-dealer-portal' ); ?>
+							<?php do_action( 'rwdp_import_csv_column_hints' ); ?>
 						</p>
 					</td>
 				</tr>
@@ -392,6 +393,15 @@ function rwdp_handle_dealer_csv_import() {
 
 		rwdp_apply_imported_geocode( $post_id, $row_data );
 
+		/**
+		 * Fires after all core dealer fields have been saved for an imported row.
+		 * Add-ons can hook here to save additional meta from the CSV row data.
+		 *
+		 * @param int   $post_id  The newly inserted dealer post ID.
+		 * @param array $row_data Keyed CSV row data (headers normalised to lowercase snake_case).
+		 */
+		do_action( 'rwdp_import_dealer_extra_fields', $post_id, $row_data );
+
 		if ( ! empty( $row_warnings ) ) {
 			$results['warnings']++;
 			$results['warning_rows'][] = [
@@ -488,6 +498,7 @@ function rwdp_apply_imported_dealer_meta( $post_id, $row_data ) {
 		'_rwdp_state'          => 'state',
 		'_rwdp_zip'            => 'zip',
 		'_rwdp_phone'          => 'phone',
+		'_rwdp_contact_name'   => 'contact_name',
 		'_rwdp_public_email'   => 'public_email',
 		'_rwdp_contact_emails' => 'contact_emails',
 		'_rwdp_hours'          => 'hours',

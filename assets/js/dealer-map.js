@@ -12,6 +12,25 @@ var rwdpInitMap; // exposed globally for Google Maps callback
   var infoWindow    = null;
   var selectedId    = null;
 
+  var extensionApi = {
+    getMap: function () { return map; },
+    getMarkers: function () { return allMarkers.slice(); },
+    getDealers: function () { return allDealers.slice(); },
+    getDealerById: function (dealerId) {
+      return allDealers.find(function (d) { return Number(d.id) === Number(dealerId); }) || null;
+    },
+    getMarkerByDealerId: function (dealerId) {
+      return allMarkers.find(function (m) { return m.dealerData && Number(m.dealerData.id) === Number(dealerId); }) || null;
+    },
+    openInfoWindowByDealerId: function (dealerId) {
+      var dealer = allDealers.find(function (d) { return Number(d.id) === Number(dealerId); });
+      var marker = allMarkers.find(function (m) { return m.dealerData && Number(m.dealerData.id) === Number(dealerId); });
+      if (dealer && marker) {
+        openInfoWindow(marker, dealer);
+      }
+    }
+  };
+
   // -----------------------------------------------------------------------
   // Haversine distance (miles)
   // -----------------------------------------------------------------------
@@ -122,6 +141,7 @@ var rwdpInitMap; // exposed globally for Google Maps callback
 
     fitBoundsToMarkers();
     showResultsList(dealers);
+    $(document).trigger('rwdp:markers-updated', [extensionApi, dealers]);
   }
 
   function clearMarkers() {
@@ -182,6 +202,7 @@ var rwdpInitMap; // exposed globally for Google Maps callback
 
     if (!dealers || !dealers.length) {
       $list.html('<p class="rwdp-finder__no-results">' + rwdpMap.noResults + '</p>');
+      $(document).trigger('rwdp:results-rendered', [extensionApi, []]);
       return;
     }
 
@@ -290,6 +311,7 @@ var rwdpInitMap; // exposed globally for Google Maps callback
     });
 
     $list.append($grid);
+    $(document).trigger('rwdp:results-rendered', [extensionApi, dealers]);
   }
 
   // -----------------------------------------------------------------------
@@ -371,6 +393,28 @@ var rwdpInitMap; // exposed globally for Google Maps callback
     });
   }
 
+  function getVisibleDealerIdsForPrint() {
+    var ids = [];
+
+    if (allMarkers && allMarkers.length) {
+      allMarkers.forEach(function (marker) {
+        if (marker && marker.dealerData && marker.dealerData.id) {
+          ids.push(parseInt(marker.dealerData.id, 10));
+        }
+      });
+    } else if (allDealers && allDealers.length) {
+      allDealers.forEach(function (dealer) {
+        if (dealer && dealer.id) {
+          ids.push(parseInt(dealer.id, 10));
+        }
+      });
+    }
+
+    return ids.filter(function (id, idx, arr) {
+      return id && arr.indexOf(id) === idx;
+    });
+  }
+
   // -----------------------------------------------------------------------
   // Contact modal
   // -----------------------------------------------------------------------
@@ -394,6 +438,7 @@ var rwdpInitMap; // exposed globally for Google Maps callback
       $('html, body').animate({ scrollTop: $map.offset().top - offset }, 400);
     }
   });
+
   $(document).on('click', '#rwdp-modal-close, #rwdp-modal-overlay', function () {
     closeContactModal();
   });
@@ -428,6 +473,25 @@ var rwdpInitMap; // exposed globally for Google Maps callback
     });
   });
 
+  $(document).on('click', '#rwdp-print-results-btn', function (e) {
+    // Compatibility behavior: add-on plugin handles the print/PDF route.
+    var baseUrl = $(this).data('print-base') || $(this).attr('href') || '';
+    if (!baseUrl) {
+      return;
+    }
+
+    var ids = getVisibleDealerIdsForPrint();
+    if (!ids.length) {
+      return;
+    }
+
+    e.preventDefault();
+
+    var separator = baseUrl.indexOf('?') === -1 ? '?' : '&';
+    var targetUrl = baseUrl + separator + 'dealer_ids=' + encodeURIComponent(ids.join(','));
+    window.open(targetUrl, '_blank');
+  });
+
   // -----------------------------------------------------------------------
   // Map initialisation (called by Google Maps callback)
   // -----------------------------------------------------------------------
@@ -441,6 +505,9 @@ var rwdpInitMap; // exposed globally for Google Maps callback
     });
 
     infoWindow = new google.maps.InfoWindow();
+
+    window.rwdpDealerMapApi = extensionApi;
+    $(document).trigger('rwdp:map-ready', [extensionApi]);
 
     fetchDealers(function (dealers) {
       placeMarkers(dealers);
