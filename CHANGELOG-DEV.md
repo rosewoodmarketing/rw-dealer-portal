@@ -2,6 +2,37 @@
 
 ---
 
+Date: 2026-05-13
+Scope: Maps API key validation UX, settings-tab markup fix, and docs clarity updates.
+
+## Implemented change summary
+1. Added API key validation checks in Settings → Maps API Keys:
+- New “Test API Keys” button.
+- Per-key validation output for Frontend API key and Server (Geocoding) key.
+- User-facing error hints for common Google statuses (REQUEST_DENIED, OVER_QUERY_LIMIT, OVER_DAILY_LIMIT, RESOURCE_EXHAUSTED, etc.).
+2. Fixed settings tab rendering flow in `includes/admin-settings.php`:
+- Restored missing Contact Form tab content.
+- Restored missing Portal Pages tab content.
+- Corrected tab conditional flow so Maps content no longer swallows subsequent sections.
+3. Improved docs readability in `docs/available-fields.md`:
+- Added clearer visual split between Dealer and Asset post types.
+- Added quick comparison section and clearer dynamic-tag scope notes.
+
+## Files changed
+1. `includes/admin-settings.php`
+- Added AJAX hook and validation helper for key testing.
+- Added maps-tab validation UI and nonce-backed request flow.
+- Corrected tab markup branching to restore Contact and Pages content.
+2. `assets/js/admin-settings.js`
+- Added click handler + AJAX flow for key validation.
+- Added pass/fail display rendering for each key.
+3. `assets/css/admin.css`
+- Added styles for validation status blocks and indicators.
+4. `docs/available-fields.md`
+- Refined structure and visual separation for post-type differences.
+
+---
+
 ## Development Conventions
 
 ### Elementor Widgets Must Be Thin Wrappers Around Shortcodes

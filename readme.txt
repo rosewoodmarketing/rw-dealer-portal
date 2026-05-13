@@ -4,7 +4,7 @@ Tags: dealer, dealer finder, dealer portal, dealer locator, elementor
 Requires at least: 6.5
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.0.16
+Stable tag: 1.0.17
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -62,6 +62,11 @@ Use the **Lock to Dealer Type** control on the Dealer Search Bar widget and ente
 4. Plugin settings screen (Google Maps API key, page assignments).
 
 == Changelog ==
+
+= 1.0.17 =
+* Added: Google Maps API key validation in Settings → Maps API Keys with a new “Test API Keys” button. Validation now reports per-key pass/fail status for Frontend and Server keys and surfaces Google API error codes with actionable hints.
+* Fixed: Settings tab rendering regression where Contact Form and Portal Pages content was hidden due to tab markup flow in `includes/admin-settings.php`.
+* Added: `docs/available-fields.md` Added a list of the Available Post Types and Fields.
 
 = 1.0.16 =
 * Added: Dealer CSV importer — upload a `.csv` file from the Dealers admin list screen (via the new "Import CSV" button) to bulk-create dealer records. Required column: `title`. Optional columns: `address`, `city`, `state`, `zip`, `phone`, `public_email`, `contact_emails`, `hours`, `website`, `dealer_type`, `featured_image_url`, `logo_url`, `lat`, `lng`. Duplicate titles (matched by post title) are skipped. Results screen shows processed, imported, skipped, error, and warning counts with per-row detail.
