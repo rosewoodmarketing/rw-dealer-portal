@@ -1,4 +1,4 @@
-# Elementor Loop Grid — RW Dealer Portal Assets
+# Assets Pages - Display with Elementor Loop Grid
 
 Two custom query IDs are registered by the plugin so Elementor's Loop Grid
 widget can query `rw_asset` posts without needing a CPT archive or any

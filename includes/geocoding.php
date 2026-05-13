@@ -55,6 +55,8 @@ function rwdp_geocode_address( $address ) {
  */
 function rwdp_geocode_and_store( $post_id, $address ) {
 	$result = rwdp_geocode_address( $address );
+	$had_lat = (string) get_post_meta( $post_id, '_rwdp_lat', true ) !== '';
+	$had_lng = (string) get_post_meta( $post_id, '_rwdp_lng', true ) !== '';
 
 	if ( $result && isset( $result['lat'] ) ) {
 		update_post_meta( $post_id, '_rwdp_lat', $result['lat'] );
@@ -70,6 +72,10 @@ function rwdp_geocode_and_store( $post_id, $address ) {
 		// strip a dealer from search results — preserve the existing valid status.
 		$definitive_failures = [ 'ZERO_RESULTS', 'INVALID_REQUEST' ];
 		if ( in_array( $error, $definitive_failures, true ) ) {
+			update_post_meta( $post_id, '_rwdp_address_valid', '0' );
+		} elseif ( ! $had_lat || ! $had_lng ) {
+			// First-time geocode failure with no existing coordinates: mark invalid
+			// so admin status clearly shows a failure instead of "No data yet".
 			update_post_meta( $post_id, '_rwdp_address_valid', '0' );
 		}
 		// For all other errors (REQUEST_DENIED, OVER_QUERY_LIMIT, NO_RESPONSE, etc.)

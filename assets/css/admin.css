@@ -260,6 +260,39 @@
   color: #d63638;
 }
 
+/* ---- API Key validation status ---- */
+#rwdp-frontend-status,
+#rwdp-server-status {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  padding: 8px;
+  border-radius: 3px;
+  margin-top: 8px;
+}
+
+#rwdp-frontend-status.valid,
+#rwdp-server-status.valid {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+}
+
+#rwdp-frontend-status.invalid,
+#rwdp-server-status.invalid {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+}
+
+.rwdp-status-indicator {
+  font-weight: bold;
+  margin-right: 8px;
+  font-size: 1.1rem;
+}
+
+.rwdp-status-message {
+  line-height: 1.5;
+}
+
 /* ---- Filters row ---- */
 .rwdp-filters {
   margin: 16px 0;

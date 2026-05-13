@@ -140,6 +140,7 @@ function rwdp_render_dealer_geo_meta_box( $post ) {
 	$lat   = get_post_meta( $post->ID, '_rwdp_lat', true );
 	$lng   = get_post_meta( $post->ID, '_rwdp_lng', true );
 	$valid = get_post_meta( $post->ID, '_rwdp_address_valid', true );
+	$geo_error = get_post_meta( $post->ID, '_rwdp_geo_error', true );
 
 	if ( $lat && $lng && $valid === '1' ) {
 		echo '<p style="color:green;">&#10003; ' . esc_html__( 'Address geocoded', 'rw-dealer-portal' ) . '</p>';
@@ -150,8 +151,7 @@ function rwdp_render_dealer_geo_meta_box( $post ) {
 		echo '<p style="color:orange;">&#9888; ' . esc_html__( 'Coordinates exist but dealer is hidden from search (validation flag is incorrect). Save this post to repair automatically.', 'rw-dealer-portal' ) . '</p>';
 		echo '<p><strong>' . esc_html__( 'Latitude:', 'rw-dealer-portal' ) . '</strong> ' . esc_html( $lat ) . '</p>';
 		echo '<p><strong>' . esc_html__( 'Longitude:', 'rw-dealer-portal' ) . '</strong> ' . esc_html( $lng ) . '</p>';
-	} elseif ( $valid === '0' ) {
-		$geo_error = get_post_meta( $post->ID, '_rwdp_geo_error', true );
+	} elseif ( $valid === '0' || ! empty( $geo_error ) ) {
 		echo '<p style="color:red;">&#10007; ' . esc_html__( 'Address could not be geocoded. Check the address and save again.', 'rw-dealer-portal' ) . '</p>';
 		if ( $geo_error ) {
 			$hints = [

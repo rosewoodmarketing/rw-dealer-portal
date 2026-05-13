@@ -4,6 +4,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 add_action( 'admin_init', 'rwdp_register_settings' );
 add_action( 'admin_enqueue_scripts', 'rwdp_admin_enqueue_assets' );
 add_action( 'admin_post_rwdp_rebuild_pages', 'rwdp_handle_rebuild_pages' );
+add_action( 'wp_ajax_rwdp_test_api_keys', 'rwdp_test_api_keys' );
 
 /**
  * Handle the "Rebuild Default Pages" button submission.
@@ -21,6 +22,103 @@ function rwdp_handle_rebuild_pages() {
 	], admin_url( 'admin.php' ) ) );
 	exit;
 }
+
+/**
+ * Test Google Maps API keys via AJAX.
+ */
+function rwdp_test_api_keys() {
+	check_ajax_referer( 'rwdp_settings_nonce', 'nonce' );
+	
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'Permission denied.', 'rw-dealer-portal' ) ] );
+	}
+
+	$results = [
+		'frontend' => rwdp_validate_api_key( $_POST['frontend_key'] ?? '', 'frontend' ),
+		'server'   => rwdp_validate_api_key( $_POST['server_key'] ?? '', 'server' ),
+	];
+
+	wp_send_json_success( $results );
+}
+
+/**
+ * Validate a single Google Maps API key.
+ *
+ * @param string $api_key The API key to validate.
+ * @param string $key_type 'frontend' or 'server' for context.
+ * @return array Validation result with 'valid', 'error_code', 'error_message'.
+ */
+function rwdp_validate_api_key( $api_key, $key_type = 'frontend' ) {
+	if ( empty( $api_key ) ) {
+		return [
+			'valid'         => false,
+			'error_code'    => 'EMPTY_KEY',
+			'error_message' => __( 'API key is empty.', 'rw-dealer-portal' ),
+		];
+	}
+
+	// Use geocoding endpoint to test the key
+	$url = add_query_arg(
+		[
+			'address' => '1 Main St',
+			'key'     => $api_key,
+		],
+		'https://maps.googleapis.com/maps/api/geocode/json'
+	);
+
+	$response = wp_remote_get(
+		$url,
+		[
+			'timeout'   => 5,
+			'sslverify' => true,
+		]
+	);
+
+	if ( is_wp_error( $response ) ) {
+		return [
+			'valid'         => false,
+			'error_code'    => 'NETWORK_ERROR',
+			'error_message' => __( 'Network error: ', 'rw-dealer-portal' ) . $response->get_error_message(),
+		];
+	}
+
+	$body = wp_remote_retrieve_body( $response );
+	$data = json_decode( $body, true );
+
+	// Map of error codes to user-friendly messages
+	$error_hints = [
+		'REQUEST_DENIED'        => __( 'API key is invalid or the Geocoding API is not enabled for this project.', 'rw-dealer-portal' ),
+		'INVALID_REQUEST'       => __( 'Request was invalid. Verify your API key configuration.', 'rw-dealer-portal' ),
+		'OVER_QUERY_LIMIT'      => __( 'Query limit exceeded. Check your billing and daily quotas in Google Cloud Console.', 'rw-dealer-portal' ),
+		'OVER_DAILY_LIMIT'      => __( 'Daily limit exceeded. Your quota will reset at midnight UTC.', 'rw-dealer-portal' ),
+		'RESOURCE_EXHAUSTED'    => __( 'API resource exhausted. Enable billing in Google Cloud Console.', 'rw-dealer-portal' ),
+		'NOT_FOUND'             => __( 'Geocoding data not found for the test address.', 'rw-dealer-portal' ),
+	];
+
+	$status = $data['status'] ?? 'UNKNOWN_ERROR';
+
+	// OK or ZERO_RESULTS means the key is valid (ZERO_RESULTS = valid key but no address match)
+	if ( in_array( $status, [ 'OK', 'ZERO_RESULTS' ], true ) ) {
+		return [
+			'valid'         => true,
+			'error_code'    => '',
+			'error_message' => __( 'API key is valid.', 'rw-dealer-portal' ),
+		];
+	}
+
+	// All other statuses are errors
+	$error_message = $error_hints[ $status ] ?? sprintf(
+		__( 'Unexpected error: %s', 'rw-dealer-portal' ),
+		esc_html( $status )
+	);
+
+	return [
+		'valid'         => false,
+		'error_code'    => $status,
+		'error_message' => $error_message,
+	];
+}
+
 
 /**
  * Register the settings group used by the settings page form.
@@ -242,93 +340,114 @@ function rwdp_admin_settings_page() {
 									<input type="text" id="rwdp_google_maps_api_key" name="rwdp_settings[google_maps_api_key]"
 										value="<?php echo esc_attr( $api_key ); ?>" class="regular-text" autocomplete="off" />
 									<p class="description"><?php esc_html_e( 'Used for the Dealer Finder map embed and Places autocomplete. Restrict this key to HTTP referrers (your domain) in Google Cloud.', 'rw-dealer-portal' ); ?></p>
-								</td>
-							</tr>
+								<div id="rwdp-frontend-status" style="margin-top:8px; display:none;">
+									<span class="rwdp-status-indicator"></span>
+									<span class="rwdp-status-message"></span>
+								</div>
+							</td>
+						</tr>
 
-							<tr>
-								<th scope="row">
-									<label for="rwdp_google_maps_server_key"><?php esc_html_e( 'Server Key (Geocoding)', 'rw-dealer-portal' ); ?></label>
-								</th>
-								<td>
-									<input type="text" id="rwdp_google_maps_server_key" name="rwdp_settings[google_maps_server_key]"
-										value="<?php echo esc_attr( $server_key ); ?>" class="regular-text" autocomplete="off" />
-									<p class="description"><?php esc_html_e( 'Used server-side to geocode dealer addresses. Restrict this key to your server\'s IP in Google Cloud. Leave blank to use the Frontend key for geocoding.', 'rw-dealer-portal' ); ?></p>
-								</td>
-							</tr>
+						<tr>
+							<th scope="row">
+								<label for="rwdp_google_maps_server_key"><?php esc_html_e( 'Server Key (Geocoding)', 'rw-dealer-portal' ); ?></label>
+							</th>
+							<td>
+								<input type="text" id="rwdp_google_maps_server_key" name="rwdp_settings[google_maps_server_key]"
+									value="<?php echo esc_attr( $server_key ); ?>" class="regular-text" autocomplete="off" />
+								<p class="description"><?php esc_html_e( 'Used server-side to geocode dealer addresses. Restrict this key to your server\'s IP in Google Cloud. Leave blank to use the Frontend key for geocoding.', 'rw-dealer-portal' ); ?></p>
+								<div id="rwdp-server-status" style="margin-top:8px; display:none;">
+									<span class="rwdp-status-indicator"></span>
+									<span class="rwdp-status-message"></span>
+								</div>
+							</td>
+						</tr>
 
-						<?php elseif ( 'contact' === $current_tab ) : ?>
+						<tr>
+							<th scope="row"></th>
+							<td>
+								<button type="button" id="rwdp-test-keys-btn" class="button button-secondary">
+									<?php esc_html_e( 'Test API Keys', 'rw-dealer-portal' ); ?>
+								</button>
+								<span id="rwdp-test-spinner" class="spinner" style="display:none; visibility:visible; float:left; margin:3px 0 0 8px;"></span>
+								<p class="description" style="margin-top:8px;">
+									<?php esc_html_e( 'Click to validate your API keys. This will test your configuration without saving changes.', 'rw-dealer-portal' ); ?>
+								</p>
+							</td>
+						</tr>
 
-							<tr>
-								<th scope="row">
-									<label for="rwdp_cc_emails"><?php esc_html_e( 'CC Email Address(es)', 'rw-dealer-portal' ); ?></label>
-								</th>
-								<td>
-									<textarea id="rwdp_cc_emails" name="rwdp_settings[cc_emails]" rows="3" class="large-text"><?php echo esc_textarea( $cc_emails ); ?></textarea>
-									<p class="description"><?php esc_html_e( 'Comma-separated email addresses that receive a copy of every dealer contact submission.', 'rw-dealer-portal' ); ?></p>
-								</td>
-							</tr>
+					<?php elseif ( 'contact' === $current_tab ) : ?>
 
-							<tr>
-								<th scope="row">
-									<label for="rwdp_contact_form_id"><?php esc_html_e( 'Dealer Contact Form', 'rw-dealer-portal' ); ?></label>
-								</th>
-								<td>
-									<?php if ( $ff_forms ) : ?>
-										<select id="rwdp_contact_form_id" name="rwdp_settings[contact_form_id]">
-											<option value="0"><?php esc_html_e( '— Select Fluent Form —', 'rw-dealer-portal' ); ?></option>
-											<?php foreach ( $ff_forms as $form ) : ?>
-												<option value="<?php echo absint( $form->id ); ?>" <?php selected( $contact_form_id, $form->id ); ?>>
-													<?php echo esc_html( $form->title ); ?> (ID: <?php echo absint( $form->id ); ?>)
-												</option>
-											<?php endforeach; ?>
-										</select>
-									<?php else : ?>
-										<input type="number" id="rwdp_contact_form_id" name="rwdp_settings[contact_form_id]"
-											value="<?php echo absint( $contact_form_id ); ?>" class="small-text" min="0" />
-										<p class="description"><?php esc_html_e( 'Fluent Forms is not active. Enter the form ID manually.', 'rw-dealer-portal' ); ?></p>
-									<?php endif; ?>
-									<p class="description">
-										<?php esc_html_e( 'The Fluent Form shown on the Dealer Finder page. The form must contain a hidden field named ', 'rw-dealer-portal' ); ?>
-										<code>rwdp_dealer_id</code>.
-									</p>
-								</td>
-							</tr>
+						<tr>
+							<th scope="row">
+								<label for="rwdp_cc_emails"><?php esc_html_e( 'CC Email Address(es)', 'rw-dealer-portal' ); ?></label>
+							</th>
+							<td>
+								<textarea id="rwdp_cc_emails" name="rwdp_settings[cc_emails]" rows="3" class="large-text"><?php echo esc_textarea( $cc_emails ); ?></textarea>
+								<p class="description"><?php esc_html_e( 'Comma-separated email addresses that receive a copy of every dealer contact submission.', 'rw-dealer-portal' ); ?></p>
+							</td>
+						</tr>
 
-						<?php elseif ( 'pages' === $current_tab ) : ?>
-
-							<tr>
-								<th scope="row">
-									<label for="rwdp_login_page_id"><?php esc_html_e( 'Portal Login Page', 'rw-dealer-portal' ); ?></label>
-								</th>
-								<td>
-									<select id="rwdp_login_page_id" name="rwdp_settings[login_page_id]">
-										<option value="0"><?php esc_html_e( '— Select Page —', 'rw-dealer-portal' ); ?></option>
-										<?php foreach ( $all_pages as $page ) : ?>
-											<option value="<?php echo absint( $page->ID ); ?>" <?php selected( $login_page_id, $page->ID ); ?>>
-												<?php echo esc_html( $page->post_title ); ?>
+						<tr>
+							<th scope="row">
+								<label for="rwdp_contact_form_id"><?php esc_html_e( 'Dealer Contact Form', 'rw-dealer-portal' ); ?></label>
+							</th>
+							<td>
+								<?php if ( $ff_forms ) : ?>
+									<select id="rwdp_contact_form_id" name="rwdp_settings[contact_form_id]">
+										<option value="0"><?php esc_html_e( '— Select Fluent Form —', 'rw-dealer-portal' ); ?></option>
+										<?php foreach ( $ff_forms as $form ) : ?>
+											<option value="<?php echo absint( $form->id ); ?>" <?php selected( $contact_form_id, $form->id ); ?>>
+												<?php echo esc_html( $form->title ); ?> (ID: <?php echo absint( $form->id ); ?>)
 											</option>
 										<?php endforeach; ?>
 									</select>
-									<p class="description"><?php esc_html_e( 'Page containing the [rwdp_login_form] shortcode. Unauthenticated users are redirected here.', 'rw-dealer-portal' ); ?></p>
-								</td>
-							</tr>
+								<?php else : ?>
+									<input type="number" id="rwdp_contact_form_id" name="rwdp_settings[contact_form_id]"
+										value="<?php echo absint( $contact_form_id ); ?>" class="small-text" min="0" />
+									<p class="description"><?php esc_html_e( 'Fluent Forms is not active. Enter the form ID manually.', 'rw-dealer-portal' ); ?></p>
+								<?php endif; ?>
+								<p class="description">
+									<?php esc_html_e( 'The Fluent Form shown on the Dealer Finder page. The form must contain a hidden field named ', 'rw-dealer-portal' ); ?>
+									<code>rwdp_dealer_id</code>.
+								</p>
+							</td>
+						</tr>
 
-							<tr>
-								<th scope="row">
-									<label for="rwdp_dashboard_page_id"><?php esc_html_e( 'Portal Dashboard Page', 'rw-dealer-portal' ); ?></label>
-								</th>
-								<td>
-									<select id="rwdp_dashboard_page_id" name="rwdp_settings[dashboard_page_id]">
-										<option value="0"><?php esc_html_e( '— Select Page —', 'rw-dealer-portal' ); ?></option>
-										<?php foreach ( $all_pages as $page ) : ?>
-											<option value="<?php echo absint( $page->ID ); ?>" <?php selected( $dashboard_page_id, $page->ID ); ?>>
-												<?php echo esc_html( $page->post_title ); ?>
-											</option>
-										<?php endforeach; ?>
-									</select>
-									<p class="description"><?php esc_html_e( 'Page containing the [rwdp_dashboard] shortcode. Dealers are sent here after logging in.', 'rw-dealer-portal' ); ?></p>
-								</td>
-							</tr>
+					<?php elseif ( 'pages' === $current_tab ) : ?>
+
+						<tr>
+							<th scope="row">
+								<label for="rwdp_login_page_id"><?php esc_html_e( 'Portal Login Page', 'rw-dealer-portal' ); ?></label>
+							</th>
+							<td>
+								<select id="rwdp_login_page_id" name="rwdp_settings[login_page_id]">
+									<option value="0"><?php esc_html_e( '— Select Page —', 'rw-dealer-portal' ); ?></option>
+									<?php foreach ( $all_pages as $page ) : ?>
+										<option value="<?php echo absint( $page->ID ); ?>" <?php selected( $login_page_id, $page->ID ); ?>>
+											<?php echo esc_html( $page->post_title ); ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
+								<p class="description"><?php esc_html_e( 'Page containing the [rwdp_login_form] shortcode. Unauthenticated users are redirected here.', 'rw-dealer-portal' ); ?></p>
+							</td>
+						</tr>
+
+						<tr>
+							<th scope="row">
+								<label for="rwdp_dashboard_page_id"><?php esc_html_e( 'Portal Dashboard Page', 'rw-dealer-portal' ); ?></label>
+							</th>
+							<td>
+								<select id="rwdp_dashboard_page_id" name="rwdp_settings[dashboard_page_id]">
+									<option value="0"><?php esc_html_e( '— Select Page —', 'rw-dealer-portal' ); ?></option>
+									<?php foreach ( $all_pages as $page ) : ?>
+										<option value="<?php echo absint( $page->ID ); ?>" <?php selected( $dashboard_page_id, $page->ID ); ?>>
+											<?php echo esc_html( $page->post_title ); ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
+								<p class="description"><?php esc_html_e( 'Page containing the [rwdp_dashboard] shortcode. Dealers are sent here after logging in.', 'rw-dealer-portal' ); ?></p>
+							</td>
+						</tr>
 
 						<?php elseif ( 'restricted' === $current_tab ) : ?>
 
@@ -469,5 +588,21 @@ function rwdp_admin_enqueue_assets( $hook ) {
 			RWDP_VERSION
 		);
 		wp_enqueue_media();
+	}
+
+	// Settings page specific scripts
+	if ( 'dealer-portal_page_rwdp-settings' === $hook ) {
+		wp_enqueue_script(
+			'rwdp-settings',
+			RWDP_PLUGIN_URL . 'assets/js/admin-settings.js',
+			[ 'jquery' ],
+			RWDP_VERSION,
+			true
+		);
+
+		wp_localize_script( 'rwdp-settings', 'rwdpSettings', [
+			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+			'nonce'   => wp_create_nonce( 'rwdp_settings_nonce' ),
+		] );
 	}
 }

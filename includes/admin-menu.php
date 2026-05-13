@@ -86,6 +86,16 @@ function rwdp_register_admin_menu() {
 		'rwdp_admin_pending_registrations_page'
 	);
 
+	// Help / Docs
+	add_submenu_page(
+		'rw-dealer-portal',
+		__( 'Help & Docs', 'rw-dealer-portal' ),
+		__( 'Help & Docs', 'rw-dealer-portal' ),
+		'manage_rwdp_portal',
+		'rwdp-docs',
+		'rwdp_admin_docs_page'
+	);
+
 	// Settings
 	add_submenu_page(
 		'rw-dealer-portal',
@@ -252,4 +262,257 @@ function rwdp_get_pending_user_count() {
 		'number'     => -1,
 	] );
 	return count( $users );
+}
+
+/**
+ * Plugin docs page in wp-admin.
+ */
+function rwdp_admin_docs_page() {
+	$guides = rwdp_get_docs_guides();
+	if ( empty( $guides ) ) {
+		?>
+		<div class="wrap">
+			<h1><?php esc_html_e( 'RW Dealer Portal - Help & Docs', 'rw-dealer-portal' ); ?></h1>
+			<div class="notice notice-warning"><p><?php esc_html_e( 'No docs guides were found.', 'rw-dealer-portal' ); ?></p></div>
+		</div>
+		<?php
+		return;
+	}
+
+	$active_slug  = rwdp_get_active_docs_guide_slug( $guides );
+	$active_guide = $guides[ $active_slug ];
+	$raw_markdown = file_get_contents( $active_guide['path'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+	$raw_markdown = is_string( $raw_markdown ) ? $raw_markdown : '';
+	$guide_html   = rwdp_render_markdown_for_admin_docs( $raw_markdown );
+	?>
+	<div class="wrap">
+		<h1><?php esc_html_e( 'RW Dealer Portal - Help & Docs', 'rw-dealer-portal' ); ?></h1>
+		<p><?php esc_html_e( 'Use these guides to configure Elementor and core plugin workflows.', 'rw-dealer-portal' ); ?></p>
+
+		<div style="display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start;max-width:1300px;">
+			<div class="card" style="padding:12px;position:sticky;top:32px;">
+				<h2 style="margin:4px 0 12px;"><?php esc_html_e( 'Guides', 'rw-dealer-portal' ); ?></h2>
+				<ul style="margin:0;padding-left:16px;">
+					<?php foreach ( $guides as $slug => $guide ) : ?>
+						<li style="margin:0 0 10px;">
+							<a href="<?php echo esc_url( admin_url( 'admin.php?page=rwdp-docs&guide=' . rawurlencode( $slug ) ) ); ?>"<?php echo $slug === $active_slug ? ' style="font-weight:600;"' : ''; ?>>
+								<?php echo esc_html( $guide['title'] ); ?>
+							</a>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+			</div>
+
+			<div class="card" style="padding:18px;max-width:800px;width:100%;">
+				<?php echo $guide_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- rendered via controlled markdown parser and wp_kses. ?>
+			</div>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * Discover docs guides from the plugin docs directory.
+ *
+ * @return array<string,array{title:string,path:string}>
+ */
+function rwdp_get_docs_guides() {
+	$guides = [];
+	$files  = glob( RWDP_PLUGIN_DIR . 'docs/*.md' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_glob
+
+	if ( ! is_array( $files ) ) {
+		return $guides;
+	}
+
+	sort( $files, SORT_NATURAL | SORT_FLAG_CASE );
+
+	foreach ( $files as $path ) {
+		$basename = basename( $path, '.md' );
+		$slug     = sanitize_key( $basename );
+		$title    = ucwords( str_replace( '-', ' ', $basename ) );
+
+		$contents = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		if ( is_string( $contents ) && preg_match( '/^#\s+(.+)$/m', $contents, $m ) ) {
+			$title = trim( wp_strip_all_tags( $m[1] ) );
+		}
+
+		$guides[ $slug ] = [
+			'title' => $title,
+			'path'  => $path,
+		];
+	}
+
+	return $guides;
+}
+
+/**
+ * Resolve active guide slug from query string.
+ *
+ * @param array<string,array{title:string,path:string}> $guides Guides map.
+ * @return string
+ */
+function rwdp_get_active_docs_guide_slug( array $guides ) {
+	$requested = sanitize_key( wp_unslash( $_GET['guide'] ?? '' ) );
+	if ( $requested && isset( $guides[ $requested ] ) ) {
+		return $requested;
+	}
+
+	return (string) array_key_first( $guides );
+}
+
+/**
+ * Convert markdown into safe admin HTML.
+ * Supports headings, rules, blockquotes, ordered/unordered lists, tables,
+ * and inline bold/code for plugin docs.
+ *
+ * @param string $markdown Raw markdown.
+ * @return string
+ */
+function rwdp_render_markdown_for_admin_docs( $markdown ) {
+	$markdown = str_replace( [ "\r\n", "\r" ], "\n", (string) $markdown );
+	$lines    = explode( "\n", $markdown );
+	$html     = '';
+	$count    = count( $lines );
+	$i        = 0;
+
+	while ( $i < $count ) {
+		$line    = $lines[ $i ];
+		$trimmed = trim( $line );
+
+		if ( '' === $trimmed ) {
+			$i++;
+			continue;
+		}
+
+		if ( preg_match( '/^(#{1,6})\s+(.+)$/', $trimmed, $m ) ) {
+			$level = strlen( $m[1] );
+			$html .= '<h' . $level . '>' . rwdp_docs_inline_markdown( $m[2] ) . '</h' . $level . '>';
+			$i++;
+			continue;
+		}
+
+		if ( preg_match( '/^---+$/', $trimmed ) ) {
+			$html .= '<hr />';
+			$i++;
+			continue;
+		}
+
+		if ( preg_match( '/^>\s?(.+)$/', $trimmed ) ) {
+			$quote_lines = [];
+			while ( $i < $count && preg_match( '/^>\s?(.+)$/', trim( $lines[ $i ] ), $qm ) ) {
+				$quote_lines[] = rwdp_docs_inline_markdown( $qm[1] );
+				$i++;
+			}
+			$html .= '<blockquote><p>' . implode( ' ', $quote_lines ) . '</p></blockquote>';
+			continue;
+		}
+
+		if ( preg_match( '/^\|.*\|$/', $trimmed ) && $i + 1 < $count && preg_match( '/^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/', trim( $lines[ $i + 1 ] ) ) ) {
+			$table_rows = [];
+			while ( $i < $count && preg_match( '/^\|.*\|$/', trim( $lines[ $i ] ) ) ) {
+				$table_rows[] = trim( $lines[ $i ] );
+				$i++;
+			}
+
+			$header_cells = array_values( array_filter( array_map( 'trim', explode( '|', trim( $table_rows[0], '|' ) ) ), 'strlen' ) );
+			$body_rows    = array_slice( $table_rows, 2 );
+
+			$html .= '<table class="widefat striped"><thead><tr>';
+			foreach ( $header_cells as $cell ) {
+				$html .= '<th>' . rwdp_docs_inline_markdown( $cell ) . '</th>';
+			}
+			$html .= '</tr></thead><tbody>';
+
+			foreach ( $body_rows as $row_line ) {
+				$cells = array_values( array_filter( array_map( 'trim', explode( '|', trim( $row_line, '|' ) ) ), 'strlen' ) );
+				if ( empty( $cells ) ) {
+					continue;
+				}
+				$html .= '<tr>';
+				foreach ( $cells as $cell ) {
+					$html .= '<td>' . rwdp_docs_inline_markdown( $cell ) . '</td>';
+				}
+				$html .= '</tr>';
+			}
+
+			$html .= '</tbody></table>';
+			continue;
+		}
+
+		if ( preg_match( '/^\d+\.\s+(.+)$/', $trimmed ) ) {
+			$html .= '<ol>';
+			while ( $i < $count && preg_match( '/^\d+\.\s+(.+)$/', trim( $lines[ $i ] ), $m2 ) ) {
+				$html .= '<li>' . rwdp_docs_inline_markdown( $m2[1] ) . '</li>';
+				$i++;
+			}
+			$html .= '</ol>';
+			continue;
+		}
+
+		if ( preg_match( '/^-\s+(.+)$/', $trimmed ) ) {
+			$html .= '<ul>';
+			while ( $i < $count && preg_match( '/^-\s+(.+)$/', trim( $lines[ $i ] ), $m3 ) ) {
+				$html .= '<li>' . rwdp_docs_inline_markdown( $m3[1] ) . '</li>';
+				$i++;
+			}
+			$html .= '</ul>';
+			continue;
+		}
+
+		$paragraph_lines = [];
+		while ( $i < $count ) {
+			$peek = trim( $lines[ $i ] );
+			if ( '' === $peek ) {
+				$i++;
+				break;
+			}
+			if ( preg_match( '/^(#{1,6})\s+/', $peek ) || preg_match( '/^---+$/', $peek ) || preg_match( '/^>\s?/', $peek ) || preg_match( '/^\d+\.\s+/', $peek ) || preg_match( '/^-\s+/', $peek ) || preg_match( '/^\|.*\|$/', $peek ) ) {
+				break;
+			}
+			$paragraph_lines[] = $peek;
+			$i++;
+		}
+
+		if ( ! empty( $paragraph_lines ) ) {
+			$html .= '<p>' . rwdp_docs_inline_markdown( implode( ' ', $paragraph_lines ) ) . '</p>';
+		}
+	}
+
+	$allowed = [
+		'h1'         => [],
+		'h2'         => [],
+		'h3'         => [],
+		'h4'         => [],
+		'h5'         => [],
+		'h6'         => [],
+		'p'          => [],
+		'hr'         => [],
+		'blockquote' => [],
+		'ol'         => [],
+		'ul'         => [],
+		'li'         => [],
+		'table'      => [ 'class' => [] ],
+		'thead'      => [],
+		'tbody'      => [],
+		'tr'         => [],
+		'th'         => [],
+		'td'         => [],
+		'strong'     => [],
+		'code'       => [],
+	];
+
+	return wp_kses( $html, $allowed );
+}
+
+/**
+ * Render inline markdown fragments safely.
+ *
+ * @param string $text Inline markdown text.
+ * @return string
+ */
+function rwdp_docs_inline_markdown( $text ) {
+	$text = esc_html( (string) $text );
+	$text = preg_replace( '/\*\*(.+?)\*\*/', '<strong>$1</strong>', $text );
+	$text = preg_replace( '/`([^`]+)`/', '<code>$1</code>', $text );
+	return (string) $text;
 }
