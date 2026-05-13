@@ -68,11 +68,12 @@
 			const $status = $(selector);
 			const $indicator = $status.find('.rwdp-status-indicator');
 			const $message = $status.find('.rwdp-status-message');
+			const statusClass = result.status_class || (result.valid ? 'valid' : 'invalid');
 
 			// Remove previous classes
-			$status.removeClass('valid invalid');
+			$status.removeClass('valid invalid warning');
 
-			if (result.valid) {
+			if (statusClass === 'valid') {
 				$indicator.html('✓').css({
 					'color': '#28a745',
 					'font-weight': 'bold',
@@ -80,6 +81,17 @@
 				});
 				$message.text(result.error_message).css('color', '#28a745');
 				$status.addClass('valid');
+			} else if (statusClass === 'warning') {
+				$indicator.html('!').css({
+					'color': '#a15c00',
+					'font-weight': 'bold',
+					'margin-right': '8px',
+				});
+				$message.html(
+					'<strong>' + (result.error_code || 'Notice') + ':</strong> ' +
+					result.error_message
+				).css('color', '#8a5a00');
+				$status.addClass('warning');
 			} else {
 				$indicator.html('✗').css({
 					'color': '#dc3545',

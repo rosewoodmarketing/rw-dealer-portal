@@ -46,7 +46,7 @@ function rwdp_test_api_keys() {
  *
  * @param string $api_key The API key to validate.
  * @param string $key_type 'frontend' or 'server' for context.
- * @return array Validation result with 'valid', 'error_code', 'error_message'.
+ * @return array Validation result with 'valid', 'error_code', 'error_message', 'status_class'.
  */
 function rwdp_validate_api_key( $api_key, $key_type = 'frontend' ) {
 	if ( empty( $api_key ) ) {
@@ -54,6 +54,7 @@ function rwdp_validate_api_key( $api_key, $key_type = 'frontend' ) {
 			'valid'         => false,
 			'error_code'    => 'EMPTY_KEY',
 			'error_message' => __( 'API key is empty.', 'rw-dealer-portal' ),
+			'status_class'  => 'invalid',
 		];
 	}
 
@@ -79,6 +80,7 @@ function rwdp_validate_api_key( $api_key, $key_type = 'frontend' ) {
 			'valid'         => false,
 			'error_code'    => 'NETWORK_ERROR',
 			'error_message' => __( 'Network error: ', 'rw-dealer-portal' ) . $response->get_error_message(),
+			'status_class'  => 'invalid',
 		];
 	}
 
@@ -103,6 +105,18 @@ function rwdp_validate_api_key( $api_key, $key_type = 'frontend' ) {
 			'valid'         => true,
 			'error_code'    => '',
 			'error_message' => __( 'API key is valid.', 'rw-dealer-portal' ),
+			'status_class'  => 'valid',
+		];
+	}
+
+	// Frontend keys are usually HTTP-referrer restricted.
+	// This server-side geocoding test can return REQUEST_DENIED even when the browser key is correct.
+	if ( 'frontend' === $key_type && 'REQUEST_DENIED' === $status ) {
+		return [
+			'valid'         => false,
+			'error_code'    => $status,
+			'error_message' => __( 'This key may still be correct. Frontend keys are usually restricted by website referrer, but this validation runs server-side and may be denied. Confirm on a public Dealer Finder page that the map and Places autocomplete load correctly.', 'rw-dealer-portal' ),
+			'status_class'  => 'warning',
 		];
 	}
 
@@ -116,6 +130,7 @@ function rwdp_validate_api_key( $api_key, $key_type = 'frontend' ) {
 		'valid'         => false,
 		'error_code'    => $status,
 		'error_message' => $error_message,
+		'status_class'  => 'invalid',
 	];
 }
 

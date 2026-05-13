@@ -283,6 +283,12 @@
   border: 1px solid #f5c6cb;
 }
 
+#rwdp-frontend-status.warning,
+#rwdp-server-status.warning {
+  background-color: #fff3cd;
+  border: 1px solid #ffe69c;
+}
+
 .rwdp-status-indicator {
   font-weight: bold;
   margin-right: 8px;
