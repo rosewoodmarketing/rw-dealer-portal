@@ -51,6 +51,8 @@ require_once RWDP_PLUGIN_DIR . 'includes/submissions.php';
 
 // Dealer Finder
 require_once RWDP_PLUGIN_DIR . 'includes/dealer-finder.php';
+// Contractor print/list logic now lives in the optional Dealer Portal Add-Ons plugin.
+// Keep core map/widget compatibility hooks so add-on functionality works when installed.
 
 // Fluent Forms integration
 require_once RWDP_PLUGIN_DIR . 'includes/fluent-forms.php';
